@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Wealth OS – Mobile Prototype</title>
+  <link rel="stylesheet" href="mobile-prototype.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <!-- Top header -->
+    <header class="app-header">
+      <h1 class="header-title">Wealth OS</h1>
+      <span class="header-subtitle" id="headerSubtitle">Home</span>
+    </header>
+
+    <!-- Main content area -->
+    <main class="app-content">
+      <!-- Home screen -->
+      <section id="screen-home" class="screen active">
+        <div class="hero-card">
+          <span class="hero-label">Net Worth</span>
+          <div class="hero-amount">£42,350</div>
+          <span class="hero-trend">↑ £1,240 this month</span>
+        </div>
+
+        <div class="summary-grid">
+          <div class="summary-card summary-cash">
+            <span class="summary-label">Cash</span>
+            <span class="summary-value">£6,200</span>
+          </div>
+          <div class="summary-card summary-inv">
+            <span class="summary-label">Investments</span>
+            <span class="summary-value">£21,500</span>
+          </div>
+          <div class="summary-card summary-liab">
+            <span class="summary-label">Liabilities</span>
+            <span class="summary-value">£8,000</span>
+          </div>
+          <div class="summary-card summary-surplus">
+            <span class="summary-label">Monthly Surplus</span>
+            <span class="summary-value">£1,150</span>
+          </div>
+        </div>
+
+        <div class="section-block">
+          <h3 class="section-title">Insights</h3>
+          <div class="insight-card insight-tip">
+            <span class="insight-icon">💡</span>
+            <span>You're saving 36% of income — above target.</span>
+          </div>
+          <div class="insight-card insight-action">
+            <span class="insight-icon">📋</span>
+            <span>ISA allowance: £2,400 of £4,000 used this year.</span>
+          </div>
+          <div class="insight-card insight-positive">
+            <span class="insight-icon">📈</span>
+            <span>Net worth up 3% vs last month.</span>
+          </div>
+        </div>
+
+        <div class="section-block">
+          <div class="section-header">
+            <h3 class="section-title">Recent Transactions</h3>
+            <button type="button" class="link-btn" data-go="activity">See all</button>
+          </div>
+          <div class="tx-list">
+            <div class="tx-item">
+              <div class="tx-info">
+                <span class="tx-name">Monthly Salary</span>
+                <span class="tx-meta">Salary · Today</span>
+              </div>
+              <span class="tx-amount positive">+£2,500</span>
+            </div>
+            <div class="tx-item">
+              <div class="tx-info">
+                <span class="tx-name">Groceries</span>
+                <span class="tx-meta">Food · Today</span>
+              </div>
+              <span class="tx-amount negative">-£82.40</span>
+            </div>
+            <div class="tx-item">
+              <div class="tx-info">
+                <span class="tx-name">Train Pass</span>
+                <span class="tx-meta">Transport · Yesterday</span>
+              </div>
+              <span class="tx-amount negative">-£65.00</span>
+            </div>
+            <div class="tx-item">
+              <div class="tx-info">
+                <span class="tx-name">Electricity Bill</span>
+                <span class="tx-meta">Bills · 2 days ago</span>
+              </div>
+              <span class="tx-amount negative">-£120.00</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-block">
+          <h3 class="section-title">Upcoming Reminders</h3>
+          <div class="reminder-list">
+            <div class="reminder-item">
+              <span class="reminder-icon">📅</span>
+              <span class="reminder-text">Rent due in 3 days</span>
+            </div>
+            <div class="reminder-item">
+              <span class="reminder-icon">💳</span>
+              <span class="reminder-text">ISA contribution reminder</span>
+            </div>
+            <div class="reminder-item">
+              <span class="reminder-icon">🚗</span>
+              <span class="reminder-text">Car insurance renewal next month</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Accounts screen -->
+      <section id="screen-accounts" class="screen">
+        <div class="account-card">
+          <div class="acc-main">
+            <span class="acc-name">Main Current Account</span>
+            <span class="acc-type">Cash</span>
+          </div>
+          <div class="acc-balance">£4,120.00</div>
+          <span class="acc-meta">Last activity: Today</span>
+          <button type="button" class="acc-action">Transfer</button>
+        </div>
+        <div class="account-card">
+          <div class="acc-main">
+            <span class="acc-name">Emergency Fund</span>
+            <span class="acc-type">Cash</span>
+          </div>
+          <div class="acc-balance">£2,080.00</div>
+          <span class="acc-meta">Target: £10,000</span>
+          <button type="button" class="acc-action">View</button>
+        </div>
+        <div class="account-card">
+          <div class="acc-main">
+            <span class="acc-name">Vanguard ISA</span>
+            <span class="acc-type">Investment</span>
+          </div>
+          <div class="acc-balance">£12,500.00</div>
+          <span class="acc-meta">YTD: +£1,200</span>
+          <button type="button" class="acc-action">View</button>
+        </div>
+        <div class="account-card">
+          <div class="acc-main">
+            <span class="acc-name">Workplace Pension</span>
+            <span class="acc-type">Retirement</span>
+          </div>
+          <div class="acc-balance">£9,000.00</div>
+          <span class="acc-meta">Employer match: 5%</span>
+          <button type="button" class="acc-action">View</button>
+        </div>
+      </section>
+
+      <!-- Activity screen -->
+      <section id="screen-activity" class="screen">
+        <div class="search-bar">
+          <span class="search-icon">🔍</span>
+          <input type="search" placeholder="Search transactions" class="search-input" />
+        </div>
+        <div class="filter-chips">
+          <button type="button" class="chip active">All</button>
+          <button type="button" class="chip">Income</button>
+          <button type="button" class="chip">Expenses</button>
+          <button type="button" class="chip">This month</button>
+        </div>
+        <div class="tx-list">
+          <div class="tx-item tx-card">
+            <div class="tx-info">
+              <span class="tx-name">Monthly Salary</span>
+              <span class="tx-meta">Salary · 9 Mar 2025</span>
+            </div>
+            <span class="tx-amount positive">+£2,500</span>
+          </div>
+          <div class="tx-item tx-card">
+            <div class="tx-info">
+              <span class="tx-name">Groceries</span>
+              <span class="tx-meta">Food · 9 Mar 2025</span>
+            </div>
+            <span class="tx-amount negative">-£82.40</span>
+          </div>
+          <div class="tx-item tx-card">
+            <div class="tx-info">
+              <span class="tx-name">Train Pass</span>
+              <span class="tx-meta">Transport · 8 Mar 2025</span>
+            </div>
+            <span class="tx-amount negative">-£65.00</span>
+          </div>
+          <div class="tx-item tx-card">
+            <div class="tx-info">
+              <span class="tx-name">Electricity Bill</span>
+              <span class="tx-meta">Bills · 7 Mar 2025</span>
+            </div>
+            <span class="tx-amount negative">-£120.00</span>
+          </div>
+          <div class="tx-item tx-card">
+            <div class="tx-info">
+              <span class="tx-name">Coffee</span>
+              <span class="tx-meta">Food · 7 Mar 2025</span>
+            </div>
+            <span class="tx-amount negative">-£4.50</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Goals screen -->
+      <section id="screen-goals" class="screen">
+        <div class="goal-card">
+          <div class="goal-header">
+            <span class="goal-name">Emergency Fund</span>
+            <span class="goal-pct">60%</span>
+          </div>
+          <div class="goal-amounts">
+            <span>£6,000</span>
+            <span class="goal-target">/ £10,000</span>
+          </div>
+          <div class="goal-bar"><div class="goal-fill" style="width: 60%"></div></div>
+          <span class="goal-meta">~4 months to target</span>
+        </div>
+        <div class="goal-card">
+          <div class="goal-header">
+            <span class="goal-name">House Deposit</span>
+            <span class="goal-pct">36%</span>
+          </div>
+          <div class="goal-amounts">
+            <span>£12,500</span>
+            <span class="goal-target">/ £35,000</span>
+          </div>
+          <div class="goal-bar"><div class="goal-fill" style="width: 36%"></div></div>
+          <span class="goal-meta">~18 months at current rate</span>
+        </div>
+        <div class="goal-card">
+          <div class="goal-header">
+            <span class="goal-name">LISA This Year</span>
+            <span class="goal-pct">60%</span>
+          </div>
+          <div class="goal-amounts">
+            <span>£2,400</span>
+            <span class="goal-target">/ £4,000</span>
+          </div>
+          <div class="goal-bar"><div class="goal-fill" style="width: 60%"></div></div>
+          <span class="goal-meta">Deadline: 5 Apr 2025</span>
+        </div>
+        <div class="goal-card">
+          <div class="goal-header">
+            <span class="goal-name">FI Progress</span>
+            <span class="goal-pct">8%</span>
+          </div>
+          <div class="goal-amounts">
+            <span>£42,350</span>
+            <span class="goal-target">/ £500,000</span>
+          </div>
+          <div class="goal-bar"><div class="goal-fill" style="width: 8%"></div></div>
+          <span class="goal-meta">Fire number: £500k @ 4%</span>
+        </div>
+      </section>
+
+      <!-- More screen -->
+      <section id="screen-more" class="screen">
+        <div class="more-grid">
+          <button type="button" class="more-card">
+            <span class="more-icon">📋</span>
+            <span class="more-label">Tax</span>
+          </button>
+          <button type="button" class="more-card">
+            <span class="more-icon">💼</span>
+            <span class="more-label">Business</span>
+          </button>
+          <button type="button" class="more-card">
+            <span class="more-icon">📊</span>
+            <span class="more-label">Analytics</span>
+          </button>
+          <button type="button" class="more-card">
+            <span class="more-icon">🔔</span>
+            <span class="more-label">Reminders</span>
+          </button>
+          <button type="button" class="more-card">
+            <span class="more-icon">⚙️</span>
+            <span class="more-label">Settings</span>
+          </button>
+          <button type="button" class="more-card">
+            <span class="more-icon">❓</span>
+            <span class="more-label">Help</span>
+          </button>
+        </div>
+      </section>
+    </main>
+
+    <!-- Bottom navigation -->
+    <nav class="bottom-nav" aria-label="Main navigation">
+      <button type="button" class="nav-tab active" data-tab="home" aria-label="Home">
+        <span class="nav-icon">🏠</span>
+        <span class="nav-label">Home</span>
+      </button>
+      <button type="button" class="nav-tab" data-tab="accounts" aria-label="Accounts">
+        <span class="nav-icon">👛</span>
+        <span class="nav-label">Accounts</span>
+      </button>
+      <button type="button" class="nav-tab" data-tab="activity" aria-label="Activity">
+        <span class="nav-icon">📋</span>
+        <span class="nav-label">Activity</span>
+      </button>
+      <button type="button" class="nav-tab" data-tab="goals" aria-label="Goals">
+        <span class="nav-icon">🎯</span>
+        <span class="nav-label">Goals</span>
+      </button>
+      <button type="button" class="nav-tab" data-tab="more" aria-label="More">
+        <span class="nav-icon">☰</span>
+        <span class="nav-label">More</span>
+      </button>
+    </nav>
+
+    <!-- Floating action button -->
+    <div class="fab-container">
+      <div id="fabMenu" class="fab-menu hidden">
+        <button type="button" class="fab-action" data-action="transaction">+ Transaction</button>
+        <button type="button" class="fab-action" data-action="account">+ Account</button>
+        <button type="button" class="fab-action" data-action="goal">+ Goal</button>
+        <button type="button" class="fab-action" data-action="snapshot">+ Snapshot</button>
+        <button type="button" class="fab-action" data-action="reminder">+ Reminder</button>
+      </div>
+      <button type="button" id="fabTrigger" class="fab-trigger" aria-label="Add">
+        <span class="fab-icon">+</span>
+      </button>
+    </div>
+  </div>
+
+  <script src="mobile-prototype.js"></script>
+</body>
+</html>
