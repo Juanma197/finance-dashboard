@@ -6,6 +6,9 @@
 
 /* ========== Storage Keys ========== */
 const KEYS = {
+  onboardingCompleted: "wealth-os-onboarding-completed",
+  demoDataLoaded: "wealth-os-demo-data-loaded",
+  setupChecklistHidden: "wealth-os-setup-checklist-hidden",
   accounts: "wealth-os-accounts",
   transactions: "wealth-os-transactions",
   investments: "wealth-os-investments",
@@ -24,14 +27,44 @@ const KEYS = {
   ukAllowances: "wealth-os-uk-allowances",
 };
 
-/* ========== Default Data ========== */
-const DEFAULT_TRANSACTIONS = [
-  { id: 1, description: "Monthly salary", amount: 2500, category: "Salary", date: getTodayStr() },
-  { id: 2, description: "Groceries", amount: -85.5, category: "Food", date: getTodayStr() },
-  { id: 3, description: "Bus pass", amount: -65, category: "Transport", date: getTodayStr() },
-  { id: 4, description: "Electricity bill", amount: -120, category: "Bills", date: getTodayStr() },
-  { id: 5, description: "Coffee shop", amount: -4.5, category: "Food", date: getTodayStr() },
-];
+/* ========== Demo Data ==========
+ * Realistic sample data for first-time exploration. User can clear it later.
+ */
+function getDemoData() {
+  const today = getTodayStr();
+  const lastMonth = new Date();
+  lastMonth.setMonth(lastMonth.getMonth() - 1);
+  const lastMonthStr = lastMonth.toISOString().slice(0, 7);
+  return {
+    accounts: [
+      { id: 1, name: "Current Account", type: "Cash", balance: 4200, notes: "" },
+      { id: 2, name: "Savings", type: "Cash", balance: 8500, notes: "" },
+      { id: 3, name: "Stocks & Shares ISA", type: "Investment", balance: 12000, notes: "" },
+    ],
+    transactions: [
+      { id: 1, description: "Monthly salary", amount: 3200, category: "Salary", date: today, accountId: 1, contributionType: "" },
+      { id: 2, description: "Groceries", amount: -120, category: "Food", date: today, accountId: 1, contributionType: "" },
+      { id: 3, description: "ISA contribution", amount: -200, category: "Other", date: today, accountId: 1, contributionType: "investment" },
+      { id: 4, description: "Rent", amount: -950, category: "Bills", date: today, accountId: 1, contributionType: "" },
+      { id: 5, description: "Coffee", amount: -4.5, category: "Food", date: today, accountId: null, contributionType: "" },
+    ],
+    settings: { monthlySalary: 3200, essentialExpenses: 1800, emergencyMonths: 6, theme: "dark", annualExpenses: 24000, fireMultiplier: 25, targetPassive: 0 },
+    goals: [{ id: 1, name: "Emergency fund", target: 10800, current: 5000, monthly: 300 }],
+    reminders: [{ id: 1, title: "Payday", type: "Payday", date: today }],
+    ukAllowances: { lisaYTD: 0, isaYTD: 0, pensionYTD: 0, studentLoanBalance: 0, studentLoanMonthly: 0 },
+    monthlySnapshots: [{
+      month: lastMonthStr,
+      netWorth: 24000,
+      cash: 12000,
+      investments: 11000,
+      realEstate: 0,
+      business: 0,
+      liabilities: 0,
+      income: 3200,
+      expenses: 1400,
+    }],
+  };
+}
 
 const CF_CATEGORIES = ["Salary", "Food", "Transport", "Bills", "Shopping", "Entertainment", "Business", "Other"];
 const CONTRIBUTION_TYPES = [
@@ -218,6 +251,7 @@ function initNavigation() {
       if (sectionId === "analytics") { renderAnalyticsSection(); updateAnalyticsCharts(); }
       if (sectionId === "insights") renderInsightsSection();
       if (sectionId === "uk-planning") renderUKSection();
+      if (sectionId === "settings") renderSettingsSection();
     });
   });
 }
@@ -250,6 +284,191 @@ function switchToSection(sectionId, focusSelector) {
   }
 }
 
+/* ========== Onboarding ==========
+ * First-run flow: welcome, choose blank/demo, optional guided steps.
+ * Stored in localStorage. Can be reopened from Settings.
+ */
+function isFirstRun() {
+  return localStorage.getItem(KEYS.onboardingCompleted) !== "1";
+}
+
+function completeOnboarding() {
+  localStorage.setItem(KEYS.onboardingCompleted, "1");
+}
+
+function loadDemoData() {
+  const demo = getDemoData();
+  accounts = demo.accounts;
+  transactions = demo.transactions;
+  settings = { ...settings, ...demo.settings };
+  goals = demo.goals;
+  reminders = demo.reminders;
+  ukAllowances = { ...ukAllowances, ...demo.ukAllowances };
+  monthlySnapshots = demo.monthlySnapshots || [];
+  localStorage.setItem(KEYS.demoDataLoaded, "1");
+  saveAccounts();
+  saveTransactions();
+  saveSettings();
+  saveGoals();
+  saveReminders();
+  saveUkAllowances();
+  storageWrite(KEYS.monthlySnapshots, monthlySnapshots);
+}
+
+function clearDemoData() {
+  accounts = [];
+  transactions = [];
+  goals = [];
+  reminders = [];
+  monthlySnapshots = [];
+  transfers = [];
+  settings = { monthlySalary: 0, essentialExpenses: 0, emergencyMonths: 6, theme: "dark", annualExpenses: 0, fireMultiplier: 25, targetPassive: 0 };
+  localStorage.removeItem(KEYS.demoDataLoaded);
+  saveAccounts();
+  saveTransactions();
+  saveGoals();
+  saveReminders();
+  storageWrite(KEYS.monthlySnapshots, []);
+  storageWrite(KEYS.transfers, []);
+  saveSettings();
+  alert("Demo data cleared. Start fresh with your own data.");
+  location.reload();
+}
+
+function initOnboarding() {
+  const overlay = document.getElementById("onboardingOverlay");
+  const skipBtn = document.getElementById("onboardSkip");
+  const step1 = document.getElementById("onboardingStep1");
+  const step2 = document.getElementById("onboardingStep2");
+  const step3 = document.getElementById("onboardingStep3");
+  const step4 = document.getElementById("onboardingStep4");
+  const step5 = document.getElementById("onboardingStep5");
+  const step6 = document.getElementById("onboardingStep6");
+
+  function showStep(stepEl) {
+    [step1, step2, step3, step4, step5, step6].forEach((s) => s?.classList.add("hidden"));
+    stepEl?.classList.remove("hidden");
+  }
+
+  function finish() {
+    completeOnboarding();
+    overlay?.classList.add("hidden");
+    renderOverviewSection();
+    renderAccountsSection();
+    renderCashFlowSection();
+    renderGoalsSection();
+  }
+
+  document.getElementById("onboardStartBlank")?.addEventListener("click", () => {
+    completeOnboarding();
+    overlay?.classList.add("hidden");
+  });
+
+  document.getElementById("onboardStartDemo")?.addEventListener("click", () => {
+    loadDemoData();
+    completeOnboarding();
+    overlay?.classList.add("hidden");
+    renderOverviewSection();
+    renderAccountsSection();
+    renderCashFlowSection();
+    renderGoalsSection();
+    renderUKSection();
+    updateAllCharts();
+  });
+
+  document.getElementById("onboardAddAccount")?.addEventListener("click", () => {
+    overlay?.classList.add("hidden");
+    completeOnboarding();
+    switchToSection("accounts");
+    setTimeout(() => openAccountForm(), 200);
+  });
+
+  document.getElementById("onboardGoSettings")?.addEventListener("click", () => {
+    overlay?.classList.add("hidden");
+    completeOnboarding();
+    switchToSection("settings");
+  });
+
+  document.getElementById("onboardAddGoal")?.addEventListener("click", () => {
+    overlay?.classList.add("hidden");
+    completeOnboarding();
+    switchToSection("goals");
+    setTimeout(() => document.getElementById("goalsAdd")?.click(), 200);
+  });
+
+  document.getElementById("onboardAddTransaction")?.addEventListener("click", () => {
+    overlay?.classList.add("hidden");
+    completeOnboarding();
+    switchToSection("cash-flow", "#cfDescription");
+  });
+
+  document.getElementById("onboardAddSnapshot")?.addEventListener("click", () => {
+    overlay?.classList.add("hidden");
+    completeOnboarding();
+    document.getElementById("snapshotCreateCurrent")?.click();
+  });
+
+  document.getElementById("onboardFinish")?.addEventListener("click", finish);
+
+  skipBtn?.addEventListener("click", () => {
+    completeOnboarding();
+    overlay?.classList.add("hidden");
+  });
+
+  if (isFirstRun()) overlay?.classList.remove("hidden");
+}
+
+/* ========== Setup Checklist ==========
+ * Shows progress on Overview. Hides when mostly complete or minimized.
+ */
+const SETUP_ITEMS = [
+  { id: "account", label: "Add first account", check: () => accounts.length > 0, action: () => { switchToSection("accounts"); openAccountForm(); } },
+  { id: "transaction", label: "Add first transaction", check: () => transactions.length > 0, action: () => switchToSection("cash-flow", "#cfDescription") },
+  { id: "emergency", label: "Set emergency fund target", check: () => (Number(settings.essentialExpenses) || 0) > 0 && (Number(settings.emergencyMonths) || 0) > 0, action: () => switchToSection("settings") },
+  { id: "goal", label: "Add first goal", check: () => goals.length > 0, action: () => { switchToSection("goals"); document.getElementById("goalsAdd")?.click(); } },
+  { id: "uk", label: "Set UK wrappers", check: () => (Number(ukAllowances.isaYTD) || 0) > 0 || (Number(ukAllowances.lisaYTD) || 0) > 0 || (Number(ukAllowances.pensionYTD) || 0) > 0, action: () => switchToSection("uk-planning") },
+  { id: "reminder", label: "Add first reminder", check: () => reminders.length > 0, action: () => { switchToSection("overview"); document.getElementById("reminderAdd")?.click(); } },
+  { id: "snapshot", label: "Create first snapshot", check: () => monthlySnapshots.length > 0, action: () => document.getElementById("snapshotCreateCurrent")?.click() },
+];
+
+function renderSetupChecklist() {
+  const wrapper = document.getElementById("setupChecklistWrapper");
+  const list = document.getElementById("setupChecklist");
+  const progressEl = document.getElementById("setupProgress");
+  if (!wrapper || !list) return;
+
+  const hidden = localStorage.getItem(KEYS.setupChecklistHidden) === "1";
+  const done = SETUP_ITEMS.filter((i) => i.check()).length;
+  const total = SETUP_ITEMS.length;
+
+  if (hidden || done >= total) {
+    wrapper.classList.add("hidden");
+    return;
+  }
+
+  wrapper.classList.remove("hidden");
+  if (progressEl) progressEl.textContent = `${done}/${total}`;
+  list.innerHTML = "";
+
+  SETUP_ITEMS.forEach((item) => {
+    const isDone = item.check();
+    const li = document.createElement("button");
+    li.type = "button";
+    li.className = "setup-item" + (isDone ? " done" : "");
+    li.innerHTML = `<span class="setup-icon">${isDone ? "✓" : "○"}</span><span>${escapeHtml(item.label)}</span>`;
+    if (!isDone) li.addEventListener("click", () => item.action());
+    list.appendChild(li);
+  });
+
+}
+
+function initSetupChecklist() {
+  document.getElementById("setupChecklistMinimize")?.addEventListener("click", () => {
+    localStorage.setItem(KEYS.setupChecklistHidden, "1");
+    document.getElementById("setupChecklistWrapper")?.classList.add("hidden");
+  });
+}
+
 function initQuickActions() {
   document.querySelectorAll(".quick-action-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -263,7 +482,8 @@ function initQuickActions() {
         switchToSection("goals");
         setTimeout(() => document.getElementById("goalsAdd")?.click(), 150);
       } else if (action === "snapshot") {
-        document.getElementById("snapshotCreateCurrent")?.click();
+        switchToSection("overview");
+        setTimeout(() => document.getElementById("snapshotCreateCurrent")?.click(), 200);
       } else if (action === "reminder") {
         switchToSection("overview");
         setTimeout(() => document.getElementById("reminderAdd")?.click(), 150);
@@ -291,10 +511,6 @@ function loadAll() {
     }
   }
   transactions = Array.isArray(transactions) ? transactions : [];
-  if (transactions.length === 0) {
-    transactions = JSON.parse(JSON.stringify(DEFAULT_TRANSACTIONS));
-    saveTransactions();
-  }
 
   // Investments
   const inv = localStorage.getItem(KEYS.investments);
@@ -1764,6 +1980,7 @@ function updateAllCharts() {
 }
 
 function renderOverviewSection() {
+  renderSetupChecklist();
   const data = getOverviewData();
 
   document.getElementById("overviewNetWorth").textContent = formatCurrency(data.netWorth);
@@ -2887,6 +3104,8 @@ function renderSettingsSection() {
   document.getElementById("setExpenses").value = settings.essentialExpenses || "";
   document.getElementById("setEmergencyMonths").value = settings.emergencyMonths || 6;
   document.getElementById("setTheme").value = settings.theme || "dark";
+  const demoPanel = document.getElementById("demoDataPanel");
+  if (demoPanel) demoPanel.classList.toggle("hidden", localStorage.getItem(KEYS.demoDataLoaded) !== "1");
   const ae = document.getElementById("setAnnualExpenses");
   const fm = document.getElementById("setFireMultiplier");
   const tp = document.getElementById("setTargetPassive");
@@ -2908,6 +3127,22 @@ function initSettingsSection() {
     renderSettingsSection();
     renderOverviewSection();
     alert("Settings saved.");
+  });
+
+  document.getElementById("reopenOnboarding")?.addEventListener("click", () => {
+    localStorage.removeItem(KEYS.onboardingCompleted);
+    document.getElementById("onboardingOverlay")?.classList.remove("hidden");
+  });
+
+  document.getElementById("clearDemoData")?.addEventListener("click", () => {
+    if (!confirm("Clear all demo data? This cannot be undone.")) return;
+    clearDemoData();
+  });
+
+  document.getElementById("showSetupChecklist")?.addEventListener("click", () => {
+    localStorage.removeItem(KEYS.setupChecklistHidden);
+    switchToSection("overview");
+    renderSetupChecklist();
   });
 }
 
@@ -3031,6 +3266,8 @@ function updateAnalyticsCharts() {
 /* ========== Init ========== */
 function init() {
   loadAll();
+  initOnboarding();
+  initSetupChecklist();
   initNavigation();
   initMobileMenu();
   initQuickActions();
@@ -3048,6 +3285,7 @@ function init() {
   initSettingsSection();
 
   // Initial render of all sections
+  renderSetupChecklist();
   renderOverviewSection();
   renderAccountsSection();
   renderCashFlowSection();

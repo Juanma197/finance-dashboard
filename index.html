@@ -44,13 +44,35 @@
     <main class="main-area">
       <!-- Top header bar -->
       <header class="top-header">
-        <h1 class="header-title">Wealth OS</h1>
-        <span class="header-subtitle" id="headerSubtitle">Overview</span>
+        <button type="button" id="mobileMenuBtn" class="mobile-menu-btn" aria-label="Open menu">
+          <span class="hamburger"></span>
+          <span class="hamburger"></span>
+          <span class="hamburger"></span>
+        </button>
+        <div class="header-content">
+          <div class="header-titles">
+            <h1 class="header-title" id="headerTitle">Wealth OS</h1>
+            <span class="header-subtitle" id="headerSubtitle">Overview</span>
+          </div>
+          <div class="header-actions">
+            <button type="button" class="quick-action-btn header-quick" data-quick="transaction" title="Add Transaction">+ Transaction</button>
+            <button type="button" class="quick-action-btn header-quick" data-quick="account" title="Add Account">+ Account</button>
+            <button type="button" class="quick-action-btn header-quick" data-quick="goal" title="Add Goal">+ Goal</button>
+          </div>
+        </div>
       </header>
 
       <div class="content">
         <!-- Section 1: Overview (Command Center) -->
         <section id="overview" class="section active">
+          <div id="setupChecklistWrapper" class="setup-checklist-wrapper hidden">
+            <div class="setup-checklist-header">
+              <h3>Getting Started</h3>
+              <span id="setupProgress" class="setup-progress">0/7</span>
+              <button type="button" id="setupChecklistMinimize" class="btn-minimize" aria-label="Minimize">−</button>
+            </div>
+            <div id="setupChecklist" class="setup-checklist"></div>
+          </div>
           <div class="quick-actions">
             <button type="button" class="quick-action-btn" data-quick="transaction">+ Transaction</button>
             <button type="button" class="quick-action-btn" data-quick="account">+ Account</button>
@@ -169,32 +191,53 @@
           </div>
           <div class="panel">
             <h3>Add Transaction</h3>
-            <form id="transactionForm">
+            <p class="panel-desc">Record income (positive) or expenses (negative). Optionally link to an account.</p>
+            <form id="transactionForm" class="form-stacked">
               <div class="form-row">
-                <label class="form-label">Description <input type="text" id="cfDescription" placeholder="e.g. Salary, Groceries" required /></label>
-                <label class="form-label">Amount (£) <input type="number" id="cfAmount" placeholder="Positive = income, negative = expense" step="0.01" required /></label>
-                <label class="form-label">Category
-                <select id="cfCategory">
-                  <option value="Salary">Salary</option>
-                  <option value="Food">Food</option>
-                  <option value="Transport">Transport</option>
-                  <option value="Bills">Bills</option>
-                  <option value="Shopping">Shopping</option>
-                  <option value="Entertainment">Entertainment</option>
-                  <option value="Business">Business</option>
-                  <option value="Other">Other</option>
-                </select></label>
-                <label class="form-label">Account <select id="cfAccount"><option value="">None (unlinked)</option></select></label>
-                <label class="form-label">Contribution type <select id="cfContribution">
-                  <option value="">Regular (income/expense)</option>
-                  <option value="investment">Investment contribution</option>
-                  <option value="pension">Pension contribution</option>
-                  <option value="emergency">Emergency fund</option>
-                  <option value="debt">Debt payment</option>
-                  <option value="property">Property contribution</option>
-                </select></label>
-                <label class="form-label">Date <input type="date" id="cfDate" /></label>
-                <button type="submit">Add</button>
+                <div class="form-group">
+                  <label class="form-label" for="cfDescription">Description</label>
+                  <input type="text" id="cfDescription" placeholder="e.g. Salary, Groceries" required />
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="cfAmount">Amount (£)</label>
+                  <input type="number" id="cfAmount" placeholder="+ income, − expense" step="0.01" required />
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="cfCategory">Category</label>
+                  <select id="cfCategory">
+                    <option value="Salary">Salary</option>
+                    <option value="Food">Food</option>
+                    <option value="Transport">Transport</option>
+                    <option value="Bills">Bills</option>
+                    <option value="Shopping">Shopping</option>
+                    <option value="Entertainment">Entertainment</option>
+                    <option value="Business">Business</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="cfAccount">Account</label>
+                  <select id="cfAccount"><option value="">None (unlinked)</option></select>
+                  <span class="form-hint">Link to an account to track activity</span>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="cfContribution">Contribution type</label>
+                  <select id="cfContribution">
+                    <option value="">Regular</option>
+                    <option value="investment">Investment</option>
+                    <option value="pension">Pension</option>
+                    <option value="emergency">Emergency fund</option>
+                    <option value="debt">Debt payment</option>
+                    <option value="property">Property</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="cfDate">Date</label>
+                  <input type="date" id="cfDate" />
+                </div>
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="btn-primary">Add transaction</button>
               </div>
             </form>
           </div>
@@ -424,23 +467,63 @@
 
         <!-- Section 13: Settings -->
         <section id="settings" class="section">
-          <div class="panel">
-            <h3>Settings</h3>
+          <div class="panel settings-panel">
+            <h3>General</h3>
+            <p class="panel-desc">Core preferences that affect calculations and displays.</p>
             <div class="settings-grid">
-              <label>Monthly Salary Default <input type="number" id="setSalary" step="0.01" /></label>
-              <label>Monthly Essential Expenses <input type="number" id="setExpenses" step="0.01" /></label>
-              <label>Emergency Fund Target (months) <input type="number" id="setEmergencyMonths" min="1" /></label>
-              <label>Theme <select id="setTheme"><option value="dark">Dark</option><option value="light">Light (placeholder)</option></select></label>
+              <div class="form-group">
+                <label class="form-label" for="setTheme">Theme</label>
+                <select id="setTheme"><option value="dark">Dark</option><option value="light">Light (placeholder)</option></select>
+              </div>
             </div>
-            <h4 class="settings-sub">FIRE / Financial Independence</h4>
-            <div class="settings-grid">
-              <label>Annual Essential Expenses <input type="number" id="setAnnualExpenses" step="0.01" placeholder="e.g. 24000" /></label>
-              <label>FIRE Multiplier <input type="number" id="setFireMultiplier" min="20" value="25" placeholder="25 = 4% rule" /></label>
-              <label>Target Passive Income <input type="number" id="setTargetPassive" step="0.01" placeholder="Optional" /></label>
-            </div>
-            <button type="button" id="settingsSave">Save Settings</button>
           </div>
-          <div class="panel panel-backup">
+          <div class="panel settings-panel">
+            <h3>Financial Defaults</h3>
+            <p class="panel-desc">Used for savings rate, emergency fund, and FI progress.</p>
+            <div class="settings-grid">
+              <div class="form-group">
+                <label class="form-label" for="setSalary">Monthly salary (£)</label>
+                <input type="number" id="setSalary" step="0.01" placeholder="e.g. 2500" />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="setExpenses">Essential expenses (£/mo)</label>
+                <input type="number" id="setExpenses" step="0.01" placeholder="Rent, bills, food" />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="setEmergencyMonths">Emergency fund target (months)</label>
+                <input type="number" id="setEmergencyMonths" min="1" placeholder="e.g. 6" />
+                <span class="form-hint">Months of expenses to aim for</span>
+              </div>
+            </div>
+          </div>
+          <div class="panel settings-panel">
+            <h3>FIRE / Financial Independence</h3>
+            <p class="panel-desc">For FI progress tracking. Annual expenses × multiplier = your FIRE number.</p>
+            <div class="settings-grid">
+              <div class="form-group">
+                <label class="form-label" for="setAnnualExpenses">Annual essential expenses (£)</label>
+                <input type="number" id="setAnnualExpenses" step="0.01" placeholder="e.g. 24000" />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="setFireMultiplier">FIRE multiplier</label>
+                <input type="number" id="setFireMultiplier" min="20" value="25" placeholder="25 = 4% rule" />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="setTargetPassive">Target passive income (£)</label>
+                <input type="number" id="setTargetPassive" step="0.01" placeholder="Optional" />
+              </div>
+            </div>
+            <button type="button" id="settingsSave" class="btn-primary">Save settings</button>
+          </div>
+          <div class="panel settings-panel">
+            <h3>App Experience</h3>
+            <p class="panel-desc">Guides and onboarding.</p>
+            <div class="settings-actions-inline">
+              <button type="button" id="reopenOnboarding" class="btn-secondary">Reopen onboarding</button>
+              <button type="button" id="showSetupChecklist" class="btn-secondary">Show setup checklist</button>
+            </div>
+          </div>
+          <div class="panel panel-backup settings-panel">
             <h3>Data &amp; Backup</h3>
             <p class="backup-explanation">Wealth OS stores all data locally in your browser. Export regularly to keep a backup. Imports replace current data after confirmation.</p>
             <div class="backup-actions">
@@ -453,6 +536,11 @@
               <button type="button" id="resetData" class="btn-danger">Reset App Data</button>
             </div>
           </div>
+          <div class="panel settings-panel" id="demoDataPanel">
+            <h3>Demo Data</h3>
+            <p class="panel-desc">Clear sample data if you loaded it during onboarding.</p>
+            <button type="button" id="clearDemoData" class="btn-secondary">Clear demo data</button>
+          </div>
         </section>
       </div>
     </main>
@@ -462,10 +550,14 @@
   <div id="accountFormOverlay" class="overlay hidden">
     <div class="modal">
       <h3 id="accountFormTitle">Add Account</h3>
-      <form id="accountForm">
+      <form id="accountForm" class="form-stacked">
         <input type="hidden" id="accountId" />
-        <label>Account Name <input type="text" id="accountName" placeholder="e.g. Current Account" required /></label>
-        <label>Type
+        <div class="form-group">
+          <label class="form-label" for="accountName">Account name</label>
+          <input type="text" id="accountName" placeholder="e.g. Current Account" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="accountType">Type</label>
           <select id="accountType">
             <option value="Cash">Cash</option>
             <option value="Investment">Investment</option>
@@ -474,12 +566,18 @@
             <option value="Business">Business</option>
             <option value="Liability">Liability</option>
           </select>
-        </label>
-        <label>Current Balance (£) <input type="number" id="accountBalance" step="0.01" placeholder="0.00" required /></label>
-        <label>Notes <input type="text" id="accountNotes" placeholder="Optional" /></label>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="accountBalance">Current balance (£)</label>
+          <input type="number" id="accountBalance" step="0.01" placeholder="0.00" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="accountNotes">Notes</label>
+          <input type="text" id="accountNotes" placeholder="Optional" />
+        </div>
         <div class="modal-actions">
-          <button type="button" id="accountCancel">Cancel</button>
-          <button type="submit">Save</button>
+          <button type="button" id="accountCancel" class="btn-secondary">Cancel</button>
+          <button type="submit" class="btn-primary">Save</button>
         </div>
       </form>
     </div>
@@ -600,6 +698,56 @@
           <button type="submit">Add</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- Onboarding modal -->
+  <div id="onboardingOverlay" class="overlay overlay-onboarding hidden">
+    <div class="onboarding-modal">
+      <div id="onboardingStep1" class="onboarding-step">
+        <h2>Welcome to Wealth OS</h2>
+        <p class="onboarding-desc">Your personal financial command centre. Track accounts, cash flow, goals, and UK tax wrappers in one place.</p>
+        <p class="onboarding-desc">Data stays on your device. No servers. No sign‑up.</p>
+        <div class="onboarding-choice">
+          <p class="onboarding-prompt">How would you like to start?</p>
+          <div class="onboarding-buttons">
+            <button type="button" class="onboarding-btn primary" id="onboardStartBlank">Start blank</button>
+            <button type="button" class="onboarding-btn secondary" id="onboardStartDemo">Load demo data</button>
+          </div>
+          <p class="onboarding-hint">Demo data lets you explore features. You can clear it later.</p>
+        </div>
+      </div>
+      <div id="onboardingStep2" class="onboarding-step hidden">
+        <h2>Quick setup</h2>
+        <p class="onboarding-desc">Add your first account to track cash, investments, or liabilities.</p>
+        <button type="button" class="onboarding-btn primary" id="onboardAddAccount">Add account</button>
+      </div>
+      <div id="onboardingStep3" class="onboarding-step hidden">
+        <h2>Financial defaults</h2>
+        <p class="onboarding-desc">Set monthly salary and essential expenses so insights and forecasting work better.</p>
+        <button type="button" class="onboarding-btn primary" id="onboardGoSettings">Open Settings</button>
+      </div>
+      <div id="onboardingStep4" class="onboarding-step hidden">
+        <h2>Set a goal</h2>
+        <p class="onboarding-desc">Track savings for an emergency fund, holiday, or house deposit.</p>
+        <button type="button" class="onboarding-btn primary" id="onboardAddGoal">Add goal</button>
+      </div>
+      <div id="onboardingStep5" class="onboarding-step hidden">
+        <h2>Add activity</h2>
+        <p class="onboarding-desc">Log a transaction or create a monthly snapshot to see your cash flow and net worth history.</p>
+        <div class="onboarding-buttons inline">
+          <button type="button" class="onboarding-btn secondary" id="onboardAddTransaction">Add transaction</button>
+          <button type="button" class="onboarding-btn secondary" id="onboardAddSnapshot">Create snapshot</button>
+        </div>
+      </div>
+      <div id="onboardingStep6" class="onboarding-step hidden">
+        <h2>You're all set</h2>
+        <p class="onboarding-desc">Use the sidebar to switch between Overview, Accounts, Cash Flow, Goals, and more.</p>
+        <button type="button" class="onboarding-btn primary" id="onboardFinish">Get started</button>
+      </div>
+      <div class="onboarding-footer">
+        <button type="button" class="onboarding-skip" id="onboardSkip">Skip onboarding</button>
+      </div>
     </div>
   </div>
 
