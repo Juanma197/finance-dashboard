@@ -2431,51 +2431,33 @@ body {
   #mobileFab {
     display: none !important;
   }
+  .bottom-nav {
+    display: none !important;
+  }
+  /* Mobile-only More screen: hide on desktop (no bottom nav) */
+  #mobile-more {
+    display: none !important;
+  }
 }
 
-/* ===== Mobile breakpoint: off-canvas sidebar + bottom nav ===== */
+/* ===== Mobile breakpoint: NO sidebar, bottom nav + FAB only ===== */
 @media (max-width: 768px) {
+  /* Hide desktop sidebar completely on mobile */
+  .sidebar {
+    display: none !important;
+  }
+
+  .sidebar-overlay {
+    display: none !important;
+  }
+
+  /* Hide hamburger – no sidebar to open; bottom nav is primary navigation */
   .mobile-menu-btn {
-    display: flex;
+    display: none !important;
   }
 
   .header-actions .header-quick {
     display: none !important;
-  }
-
-  .sidebar-overlay:not(.hidden) {
-    display: block;
-  }
-
-  .sidebar {
-    transform: translateX(-100%);
-    transition: transform 0.25s ease;
-    width: 280px;
-    max-width: 85vw;
-  }
-
-  .sidebar.open {
-    transform: translateX(0);
-  }
-
-  .sidebar-nav .nav-item {
-    padding: 14px 20px;
-    font-size: 0.95rem;
-    text-align: left;
-    min-height: 48px;
-  }
-
-  .sidebar-nav .nav-item::before {
-    content: none;
-  }
-
-  .logo-text {
-    display: inline;
-  }
-
-  .sidebar-logo {
-    flex-direction: row;
-    padding: 16px 20px;
   }
 
   .main-area {

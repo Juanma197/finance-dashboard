@@ -209,7 +209,10 @@ const SECTION_TITLES = {
   insights: "Insights",
   "uk-planning": "UK Planning",
   settings: "Settings",
+  "mobile-more": "More",
 };
+
+const MOBILE_NAV_SECTIONS = ["overview", "accounts", "cash-flow", "goals", "mobile-more"];
 
 function closeMobileSidebar() {
   document.getElementById("sidebar")?.classList.remove("open");
@@ -246,11 +249,10 @@ function initNavigation() {
       closeMobileSidebar();
 
       const bottomNav = document.getElementById("bottomNav");
-      const activeBottom = bottomNav?.querySelector(`.bottom-nav-item[data-section="${sectionId}"]`);
       bottomNav?.querySelectorAll(".bottom-nav-item").forEach((b) => b.classList.remove("active"));
-      if (activeBottom) activeBottom.classList.add("active");
-      else if (sectionId === "mobile-more") document.getElementById("bottomNavMore")?.classList.add("active");
-      else document.getElementById("bottomNavMore")?.classList.add("active");
+      const bottomItem = bottomNav?.querySelector(`.bottom-nav-item[data-section="${sectionId}"]`);
+      if (bottomItem) bottomItem.classList.add("active");
+      else if (sectionId === "mobile-more" || !MOBILE_NAV_SECTIONS.includes(sectionId)) document.getElementById("bottomNavMore")?.classList.add("active");
 
       if (sectionId === "cash-flow") { renderCashFlowSection(); renderInsuranceRecurringSection(); renderTransferList(); }
       if (sectionId === "overview") { renderOverviewSection(); updateAllCharts(); }
@@ -283,25 +285,22 @@ function initMobileMenu() {
 
   const bottomNav = document.getElementById("bottomNav");
   const bottomNavItems = bottomNav?.querySelectorAll(".bottom-nav-item[data-section]");
-  const bottomNavMore = document.getElementById("bottomNavMore");
 
   bottomNavItems?.forEach((btn) => {
     btn.addEventListener("click", () => {
       const sectionId = btn.dataset.section;
       if (!sectionId) return;
       const navBtn = document.querySelector(`.nav-item[data-section="${sectionId}"]`);
-      if (navBtn) navBtn.click();
-      bottomNav?.querySelectorAll(".bottom-nav-item").forEach((b) => b.classList.remove("active"));
-      btn.classList.add("active");
+      if (navBtn) {
+        navBtn.click();
+      } else if (sectionId === "mobile-more") {
+        document.querySelectorAll(".section").forEach((s) => s.classList.remove("active"));
+        document.getElementById("mobile-more")?.classList.add("active");
+        document.getElementById("headerSubtitle").textContent = "More";
+        bottomNav?.querySelectorAll(".bottom-nav-item").forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+      }
     });
-  });
-
-  bottomNavMore?.addEventListener("click", () => {
-    document.querySelectorAll(".section").forEach((s) => s.classList.remove("active"));
-    document.getElementById("mobile-more")?.classList.add("active");
-    document.getElementById("headerSubtitle").textContent = "More";
-    bottomNav?.querySelectorAll(".bottom-nav-item").forEach((b) => b.classList.remove("active"));
-    bottomNavMore?.classList.add("active");
   });
 
   document.querySelectorAll(".mobile-more-card").forEach((btn) => {
