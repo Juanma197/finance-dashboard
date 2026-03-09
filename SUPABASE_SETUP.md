@@ -26,6 +26,8 @@ This guide explains how to set up Supabase for cloud sync and authentication, co
 2. Create a new query and paste the contents of `supabase-schema.sql`.
 3. Run the query. It will create all tables and RLS policies.
 
+If you already ran an older schema and need to add `WITH CHECK` to RLS policies, run a migration: drop each policy and recreate it with `with check (auth.uid() = user_id)`.
+
 ## 4. Get your API keys
 
 1. In the Supabase dashboard, open **Project Settings** (gear icon) → **API**.
@@ -108,21 +110,7 @@ Create `vercel.json`:
 }
 ```
 
-Create `scripts/inject-env.js`:
-
-```js
-const fs = require("fs");
-let config = fs.readFileSync("config.js", "utf8");
-config = config.replace(
-  'supabaseUrl: cfg.supabaseUrl || ""',
-  `supabaseUrl: cfg.supabaseUrl || "${process.env.VITE_SUPABASE_URL || ""}"`
-);
-config = config.replace(
-  'supabaseAnonKey: cfg.supabaseAnonKey || ""',
-  `supabaseAnonKey: cfg.supabaseAnonKey || "${process.env.VITE_SUPABASE_ANON_KEY || ""}"`
-);
-fs.writeFileSync("config.js", config);
-```
+Create `scripts/inject-env.js` (or use the one included in the repo) and set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in Vercel. The script injects these into `config.js` at build time.
 
 Then set your env vars in Vercel and redeploy.
 

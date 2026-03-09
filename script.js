@@ -3382,32 +3382,41 @@ function initAuth() {
     }
     submitBtn.disabled = true;
 
-    if (mode === "signup") {
-      const { error } = await WealthOSAuth.signUp(email, password);
-      if (error) {
-        showError(error.message || "Sign up failed.");
-        submitBtn.disabled = false;
-        return;
+    try {
+      if (mode === "signup") {
+        const { error } = await WealthOSAuth.signUp(email, password);
+        if (error) {
+          showError(error.message || "Sign up failed.");
+          submitBtn.disabled = false;
+          return;
+        }
+        showError("Check your email to confirm your account.");
+      } else {
+        const { error } = await WealthOSAuth.signIn(email, password);
+        if (error) {
+          showError(error.message || "Sign in failed.");
+          submitBtn.disabled = false;
+          return;
+        }
+        showAuthScreen(false);
+        showLogoutButton(true);
+        bootstrapApp();
       }
-      showError("Check your email to confirm your account.");
-    } else {
-      const { error } = await WealthOSAuth.signIn(email, password);
-      if (error) {
-        showError(error.message || "Sign in failed.");
-        submitBtn.disabled = false;
-        return;
-      }
-      showAuthScreen(false);
-      showLogoutButton(true);
-      bootstrapApp();
+    } catch (err) {
+      console.warn("[WealthOS] Auth error:", err);
+      showError(err?.message || "Network error. Please try again.");
     }
     submitBtn.disabled = false;
   });
 }
 
 async function bootstrapApp() {
-  if (window.WealthOSSync?.loadWithSync) {
-    await window.WealthOSSync.loadWithSync();
+  try {
+    if (window.WealthOSSync?.loadWithSync) {
+      await window.WealthOSSync.loadWithSync();
+    }
+  } catch (e) {
+    console.warn("[WealthOS] Sync load failed, using localStorage:", e);
   }
   loadAll();
   initOnboarding();
@@ -3448,7 +3457,12 @@ async function bootstrapApp() {
   if (typeof Chart !== "undefined") updateAllCharts();
 
   document.getElementById("logoutBtn")?.addEventListener("click", async () => {
-    await WealthOSAuth.signOut();
+    try {
+      if (window.WealthOSAuth?.signOut) await WealthOSAuth.signOut();
+      if (window.WealthOSSync?.clearAppStorage) window.WealthOSSync.clearAppStorage();
+    } catch (e) {
+      console.warn("[WealthOS] Logout error:", e);
+    }
     showAuthScreen(true);
     showLogoutButton(false);
     document.getElementById("authForm")?.reset();
@@ -3458,7 +3472,7 @@ async function bootstrapApp() {
 
 async function bootstrap() {
   const config = window.WEALTH_OS_CONFIG || {};
-  const supabaseEnabled = config.supabaseUrl && config.supabaseAnonKey;
+  const supabaseEnabled = !!(config.supabaseUrl && config.supabaseAnonKey);
 
   if (!supabaseEnabled) {
     showAuthScreen(false);
@@ -3467,7 +3481,21 @@ async function bootstrap() {
     return;
   }
 
-  const session = await WealthOSAuth.getSession();
+  if (typeof WealthOSAuth === "undefined") {
+    console.warn("[WealthOS] Supabase auth not available, running in local mode.");
+    showAuthScreen(false);
+    showLogoutButton(false);
+    bootstrapApp();
+    return;
+  }
+
+  let session = null;
+  try {
+    session = await WealthOSAuth.getSession();
+  } catch (e) {
+    console.warn("[WealthOS] Auth session check failed, showing login:", e);
+  }
+
   if (!session) {
     showAuthScreen(true);
     showLogoutButton(false);

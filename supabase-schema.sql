@@ -142,22 +142,22 @@ alter table tax enable row level security;
 alter table uk_allowances enable row level security;
 alter table investments enable row level security;
 
--- Array tables: users see only their rows
-create policy "users_own_accounts" on accounts for all using (auth.uid() = user_id);
-create policy "users_own_transactions" on transactions for all using (auth.uid() = user_id);
-create policy "users_own_transfers" on transfers for all using (auth.uid() = user_id);
-create policy "users_own_goals" on goals for all using (auth.uid() = user_id);
-create policy "users_own_reminders" on reminders for all using (auth.uid() = user_id);
-create policy "users_own_snapshots" on snapshots for all using (auth.uid() = user_id);
-create policy "users_own_recurring" on recurring_items for all using (auth.uid() = user_id);
-create policy "users_own_properties" on properties for all using (auth.uid() = user_id);
-create policy "users_own_liabilities" on liabilities for all using (auth.uid() = user_id);
-create policy "users_own_insurance" on insurance for all using (auth.uid() = user_id);
-create policy "users_own_networth_snapshots" on networth_snapshots for all using (auth.uid() = user_id);
+-- Array tables: users see only their rows (USING = read, WITH CHECK = write)
+create policy "users_own_accounts" on accounts for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "users_own_transactions" on transactions for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "users_own_transfers" on transfers for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "users_own_goals" on goals for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "users_own_reminders" on reminders for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "users_own_snapshots" on snapshots for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "users_own_recurring" on recurring_items for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "users_own_properties" on properties for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "users_own_liabilities" on liabilities for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "users_own_insurance" on insurance for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "users_own_networth_snapshots" on networth_snapshots for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 -- Singleton tables
-create policy "users_own_settings" on settings for all using (auth.uid() = user_id);
-create policy "users_own_business" on business for all using (auth.uid() = user_id);
-create policy "users_own_tax" on tax for all using (auth.uid() = user_id);
-create policy "users_own_uk_allowances" on uk_allowances for all using (auth.uid() = user_id);
-create policy "users_own_investments" on investments for all using (auth.uid() = user_id);
+create policy "users_own_settings" on settings for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "users_own_business" on business for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "users_own_tax" on tax for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "users_own_uk_allowances" on uk_allowances for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "users_own_investments" on investments for all using (auth.uid() = user_id) with check (auth.uid() = user_id);

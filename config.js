@@ -14,10 +14,12 @@
  * See SUPABASE_SETUP.md for Vercel deployment.
  */
 (function () {
-  const cfg = (typeof window !== "undefined" && window.WEALTH_OS_CONFIG) || {};
+  const win = typeof window !== "undefined" ? window : {};
+  const cfg = win.WEALTH_OS_CONFIG || {};
+  const env = win.__ENV__ || {};
   window.WEALTH_OS_CONFIG = {
-    supabaseUrl: cfg.supabaseUrl || "",
-    supabaseAnonKey: cfg.supabaseAnonKey || "",
+    supabaseUrl: cfg.supabaseUrl || env.VITE_SUPABASE_URL || env.NEXT_PUBLIC_SUPABASE_URL || "",
+    supabaseAnonKey: cfg.supabaseAnonKey || env.VITE_SUPABASE_ANON_KEY || env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "",
     get isSupabaseEnabled() {
       return !!(this.supabaseUrl && this.supabaseAnonKey);
     },

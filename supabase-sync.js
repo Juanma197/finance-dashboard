@@ -74,6 +74,10 @@
     }
   }
 
+  function clearAppStorage() {
+    Object.values(KEYS).forEach((key) => localStorage.removeItem(key));
+  }
+
   async function loadFromSupabase() {
     const sb = getSupabase();
     const user = (await global.WealthOSAuth?.getUser?.()) || null;
@@ -154,12 +158,17 @@
     const sb = getSupabase();
 
     if (sb && user) {
-      const remote = await loadFromSupabase();
-      if (remote && Object.keys(remote).length > 0) {
-        Object.entries(remote).forEach(([k, v]) => {
-          if (v !== undefined && KEYS[k]) storageWrite(KEYS[k], v);
-        });
-        return { source: "supabase", data: remote };
+      try {
+        const remote = await loadFromSupabase();
+        if (remote) {
+          clearAppStorage();
+          Object.entries(remote).forEach(([k, v]) => {
+            if (v !== undefined && KEYS[k]) storageWrite(KEYS[k], v);
+          });
+          return { source: "supabase", data: remote };
+        }
+      } catch (e) {
+        console.warn("[WealthOS] Supabase load failed, using localStorage:", e);
       }
     }
 
@@ -171,6 +180,7 @@
     saveToSupabase,
     saveWithSync,
     loadWithSync,
+    clearAppStorage,
     KEYS,
     TABLE_MAP,
   };
