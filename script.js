@@ -34,6 +34,14 @@ const DEFAULT_TRANSACTIONS = [
 ];
 
 const CF_CATEGORIES = ["Salary", "Food", "Transport", "Bills", "Shopping", "Entertainment", "Business", "Other"];
+const CONTRIBUTION_TYPES = [
+  { value: "", label: "Regular" },
+  { value: "investment", label: "Investment" },
+  { value: "pension", label: "Pension" },
+  { value: "emergency", label: "Emergency fund" },
+  { value: "debt", label: "Debt payment" },
+  { value: "property", label: "Property" },
+];
 
 const INVESTMENT_TYPES = [
   { key: "emergencyFund", label: "Emergency Fund" },
@@ -275,6 +283,8 @@ function loadAll() {
       // Add date field if missing (legacy data)
       transactions.forEach((tr) => {
         if (!tr.date) tr.date = getTodayStr();
+        if (tr.accountId === undefined) tr.accountId = null;
+        if (tr.contributionType === undefined) tr.contributionType = "";
       });
     } catch (e) {
       transactions = [];
@@ -690,6 +700,29 @@ function initBackupSection() {
   document.getElementById("resetData")?.addEventListener("click", resetAppData);
 }
 
+/* ========== Account Activity ==========
+ * Inflows = income (amount>0) linked to account
+ * Outflows = expenses (amount<0) linked to account
+ * Transfers in/out from transfer history
+ */
+function getAccountActivity(accountId) {
+  if (!accountId) return { inflows: 0, outflows: 0, transfersIn: 0, transfersOut: 0, lastActivity: null };
+  let inflows = 0, outflows = 0;
+  let lastDate = null;
+  transactions.forEach((t) => {
+    if (t.accountId !== accountId) return;
+    if (t.amount > 0) inflows += t.amount;
+    else outflows += Math.abs(t.amount);
+    if (t.date && (!lastDate || t.date > lastDate)) lastDate = t.date;
+  });
+  let transfersIn = 0, transfersOut = 0;
+  transfers.forEach((tr) => {
+    if (tr.toAccountId === accountId) { transfersIn += tr.amount || 0; if (tr.date && (!lastDate || tr.date > lastDate)) lastDate = tr.date; }
+    if (tr.fromAccountId === accountId) { transfersOut += tr.amount || 0; if (tr.date && (!lastDate || tr.date > lastDate)) lastDate = tr.date; }
+  });
+  return { inflows, outflows, transfersIn, transfersOut, lastActivity: lastDate };
+}
+
 /* ========== Transactions (Cash Flow) ========== */
 function getTransactionTotals() {
   let income = 0, expenses = 0;
@@ -703,6 +736,7 @@ function getTransactionTotals() {
 function getFilteredTransactions() {
   const search = (document.getElementById("cfSearch")?.value || "").toLowerCase();
   const catFilter = document.getElementById("cfCategoryFilter")?.value || "";
+  const accountFilter = document.getElementById("cfAccountFilter")?.value || "";
   const sortVal = document.getElementById("cfSort")?.value || "date-desc";
 
   let list = [...transactions];
@@ -712,8 +746,10 @@ function getFilteredTransactions() {
       (t.category || "").toLowerCase().includes(search)
     );
   }
-  if (catFilter) {
-    list = list.filter((t) => (t.category || "") === catFilter);
+  if (catFilter) list = list.filter((t) => (t.category || "") === catFilter);
+  if (accountFilter) {
+    const aid = Number(accountFilter);
+    list = list.filter((t) => t.accountId === aid);
   }
 
   list.sort((a, b) => {
@@ -736,7 +772,7 @@ function getNextTransactionId() {
   return max + 1;
 }
 
-function addTransaction(description, amount, category, date) {
+function addTransaction(description, amount, category, date, accountId, contributionType) {
   const desc = (description || "").trim();
   const amt = safeNum(amount);
   if (!desc) {
@@ -749,12 +785,15 @@ function addTransaction(description, amount, category, date) {
   }
   showValidationError("cfDescription", "");
   showValidationError("cfAmount", "");
+  const aid = accountId && accountId !== "" ? Number(accountId) : null;
   transactions.push({
     id: getNextTransactionId(),
     description: desc,
     amount: amt,
     category: category || "Other",
     date: date || getTodayStr(),
+    accountId: aid,
+    contributionType: contributionType || "",
   });
   saveTransactions();
   renderCashFlowSection();
@@ -784,15 +823,19 @@ function clearAllTransactions() {
 function renderTransactionItem(t, container) {
   const li = document.createElement("li");
   li.className = "transaction-item";
-
   const isIncome = t.amount > 0;
   const amtClass = isIncome ? "income" : "expense";
   const amtText = isIncome ? "+" + formatCurrency(t.amount) : "-" + formatCurrency(t.amount);
+  const accName = t.accountId ? (accounts.find((a) => a.id === t.accountId)?.name || "") : "";
+  const contribLabel = t.contributionType ? CONTRIBUTION_TYPES.find((c) => c.value === t.contributionType)?.label || "" : "";
+  const metaParts = [escapeHtml(t.category), t.date || ""];
+  if (accName) metaParts.push(accName);
+  if (contribLabel) metaParts.push(contribLabel);
 
   li.innerHTML = `
     <div class="transaction-info">
       <span class="transaction-desc">${escapeHtml(t.description)}</span>
-      <span class="transaction-meta">${escapeHtml(t.category)} • ${escapeHtml(t.date || "")}</span>
+      <span class="transaction-meta">${metaParts.filter(Boolean).join(" • ")}</span>
     </div>
     <div class="transaction-right">
       <span class="transaction-amount ${amtClass}">${amtText}</span>
@@ -820,6 +863,17 @@ function getCashFlowAnalytics() {
     }
   });
 
+  const byContribution = {};
+  monthTx.forEach((t) => {
+    const ct = t.contributionType || "regular";
+    if (!byContribution[ct]) byContribution[ct] = { in: 0, out: 0 };
+    if (t.amount > 0) byContribution[ct].in += t.amount;
+    else byContribution[ct].out += Math.abs(t.amount);
+  });
+
+  const totalIncome = incomes.reduce((a, b) => a + b, 0);
+  const totalExpenses = expenses.reduce((a, b) => a + b, 0);
+
   return {
     count: monthTx.length,
     largestExpense: expenses.length ? Math.max(...expenses) : 0,
@@ -827,14 +881,35 @@ function getCashFlowAnalytics() {
     avgExpense: expenses.length ? expenses.reduce((a, b) => a + b, 0) / expenses.length : 0,
     avgIncome: incomes.length ? incomes.reduce((a, b) => a + b, 0) / incomes.length : 0,
     byCategory: catTotals,
+    byContribution,
+    income: totalIncome,
+    expenses: totalExpenses,
   };
+}
+
+function getMonthlyContributions(monthKey) {
+  const monthTx = transactions.filter((t) => (t.date || "").slice(0, 7) === monthKey);
+  const out = { investment: 0, pension: 0, emergency: 0, debt: 0, property: 0 };
+  monthTx.forEach((t) => {
+    const ct = t.contributionType || "";
+    if (ct && out[ct] !== undefined) out[ct] += Math.abs(t.amount);
+  });
+  return out;
 }
 
 function renderCashFlowSection() {
   const { balance, income, expenses } = getTransactionTotals();
+  const linkedCount = transactions.filter((t) => t.accountId != null).length;
   document.getElementById("cfBalance").textContent = formatCurrency(balance);
   document.getElementById("cfIncome").textContent = formatCurrency(income);
   document.getElementById("cfExpenses").textContent = formatCurrency(expenses);
+  const src = transactions.length ? `${transactions.length} transactions` + (linkedCount > 0 ? ` (${linkedCount} linked)` : "") : "No data";
+  const balanceSrc = document.getElementById("cfBalanceSource");
+  const incomeSrc = document.getElementById("cfIncomeSource");
+  const expensesSrc = document.getElementById("cfExpensesSource");
+  if (balanceSrc) balanceSrc.textContent = src;
+  if (incomeSrc) incomeSrc.textContent = src;
+  if (expensesSrc) expensesSrc.textContent = src;
   const sr = getSavingsRateData();
   const srEl = document.getElementById("cfSavingsRate");
   if (srEl) srEl.textContent = sr.currentRate != null ? `${sr.currentRate.toFixed(0)}%` + (sr.avgRate != null ? ` (avg ${sr.avgRate.toFixed(0)}%)` : "") : "—";
@@ -871,7 +946,22 @@ function renderCashFlowSection() {
     breakdownEl.innerHTML = '<p class="empty-message" style="padding:16px">No spending data this month</p>';
   }
 
-  // Category filter options
+  const popAccountSelect = (elId, emptyLabel) => {
+    const el = document.getElementById(elId);
+    if (!el) return;
+    const current = el.value;
+    el.innerHTML = `<option value="">${emptyLabel}</option>`;
+    accounts.forEach((a) => {
+      const opt = document.createElement("option");
+      opt.value = a.id;
+      opt.textContent = `${a.name} (${a.type})`;
+      if (String(a.id) === current) opt.selected = true;
+      el.appendChild(opt);
+    });
+  };
+  popAccountSelect("cfAccount", "None (unlinked)");
+  popAccountSelect("cfAccountFilter", "All accounts");
+
   const catFilter = document.getElementById("cfCategoryFilter");
   if (catFilter) {
     const current = catFilter.value;
@@ -914,7 +1004,9 @@ function initCashFlowForm() {
     const amount = document.getElementById("cfAmount").value;
     const category = document.getElementById("cfCategory").value;
     const date = document.getElementById("cfDate").value || getTodayStr();
-    addTransaction(desc, amount, category, date);
+    const accountId = document.getElementById("cfAccount")?.value || "";
+    const contributionType = document.getElementById("cfContribution")?.value || "";
+    addTransaction(desc, amount, category, date, accountId, contributionType);
     if (submitBtn) {
       submitBtn.disabled = true;
       setTimeout(() => { submitBtn.disabled = false; }, 800);
@@ -924,8 +1016,10 @@ function initCashFlowForm() {
   });
 
   document.getElementById("cfSearch")?.addEventListener("input", () => renderCashFlowSection());
+  document.getElementById("cfAccountFilter")?.addEventListener("change", () => renderCashFlowSection());
   document.getElementById("cfCategoryFilter")?.addEventListener("change", () => renderCashFlowSection());
   document.getElementById("cfSort")?.addEventListener("change", () => renderCashFlowSection());
+  document.getElementById("transferAccountFilter")?.addEventListener("change", () => renderTransferList());
   document.getElementById("cfClearAll")?.addEventListener("click", clearAllTransactions);
 }
 
@@ -1141,9 +1235,10 @@ function getSavingsRateData() {
     if (dm !== thisMonth) return;
     if (t.amount > 0) {
       monIn += t.amount;
-      if ((t.category || "").toLowerCase().includes("pension") || (t.category || "").toLowerCase().includes("investment")) invContrib += t.amount;
     } else {
       monOut += Math.abs(t.amount);
+      if (t.contributionType === "investment" || t.contributionType === "pension") invContrib += Math.abs(t.amount);
+      else if ((t.category || "").toLowerCase().includes("pension") || (t.category || "").toLowerCase().includes("investment")) invContrib += Math.abs(t.amount);
     }
   });
   const savings = monIn - monOut;
@@ -1393,8 +1488,15 @@ function renderInsightsSection() {
 
   const review = getMonthlyReviewData();
   const reviewEl = document.getElementById("monthlyReview");
+  const contribLabels = { investment: "Investment", pension: "Pension", emergency: "Emergency fund", debt: "Debt", property: "Property" };
+  const contribItems = Object.entries(review.contributions || {})
+    .filter(([, amt]) => amt > 0)
+    .map(([k, amt]) => `<span class="contrib-tag">${contribLabels[k] || k}: ${formatCurrency(amt)}</span>`)
+    .join("");
+  const srcHint = review.txCount > 0 ? `From ${review.txCount} transaction${review.txCount !== 1 ? "s" : ""} this month` : "No transactions this month";
   if (reviewEl) {
     reviewEl.innerHTML = `
+      <p class="panel-hint review-source">${srcHint}. Transfers excluded from income/expenses.</p>
       <div class="review-grid">
         <div class="review-item"><span class="review-label">Income</span><span>${formatCurrency(review.income)}</span></div>
         <div class="review-item"><span class="review-label">Expenses</span><span>${formatCurrency(review.expenses)}</span></div>
@@ -1403,6 +1505,7 @@ function renderInsightsSection() {
         <div class="review-item"><span class="review-label">Net worth change</span><span class="${review.netWorthChange != null && review.netWorthChange >= 0 ? "positive" : "negative"}">${review.netWorthChange != null ? formatCurrency(review.netWorthChange) : "—"}</span></div>
         <div class="review-item"><span class="review-label">Biggest expense</span><span>${review.biggestCategory ? review.biggestCategory + " " + formatCurrency(review.biggestAmount) : "—"}</span></div>
       </div>
+      ${contribItems ? `<div class="review-contributions"><h4>Contributions</h4><div class="contrib-tags">${contribItems}</div></div>` : ""}
       <div class="review-upcoming">
         <h4>Upcoming</h4>
         ${review.upcoming.length ? review.upcoming.map((u) => `<div class="reminder-item"><span>${escapeHtml(u.title)}</span><span>${escapeHtml(u.date)}</span></div>`).join("") : "<p class='empty-message'>No upcoming dates</p>"}
@@ -1415,6 +1518,7 @@ function renderInsightsSection() {
 function getMonthlyReviewData() {
   const data = getOverviewData();
   const analytics = getCashFlowAnalytics();
+  const contributions = getMonthlyContributions(getCurrentMonthStr());
   const sr = getSavingsRateData();
   const mc = getMonthlyNetWorthChange();
   const biggestCat = Object.entries(analytics.byCategory).sort((a, b) => b[1] - a[1])[0];
@@ -1422,13 +1526,15 @@ function getMonthlyReviewData() {
     .sort((a, b) => (a.date || "").localeCompare(b.date || ""))
     .slice(0, 5);
   return {
-    income: data.monIn,
-    expenses: data.monOut,
-    surplus: data.monIn - data.monOut,
+    income: analytics.income,
+    expenses: analytics.expenses,
+    surplus: analytics.income - analytics.expenses,
     savingsRate: sr.currentRate,
     netWorthChange: mc.change,
     biggestCategory: biggestCat ? biggestCat[0] : null,
     biggestAmount: biggestCat ? biggestCat[1] : 0,
+    contributions,
+    txCount: analytics.count,
     upcoming,
   };
 }
@@ -1675,7 +1781,8 @@ function renderOverviewSection() {
     if (intel.avgGrowth != null) parts.push(`Avg growth/mo: ${formatCurrency(intel.avgGrowth)}`);
     if (intel.bestMonth) parts.push(`Best: ${intel.bestMonth}`);
     if (intel.worstMonth) parts.push(`Worst: ${intel.worstMonth}`);
-    trendsEl.textContent = parts.length ? parts.join(" · ") : "";
+    const nwSource = accounts.length ? `From ${accounts.length} account${accounts.length !== 1 ? "s" : ""}` : "Add accounts to track";
+    trendsEl.innerHTML = parts.length ? parts.join(" · ") + (accounts.length ? `<br><span class="metric-source">${nwSource}</span>` : "") : (accounts.length ? `<span class="metric-source">${nwSource}</span>` : "");
   }
 
   const sr = getSavingsRateData();
@@ -1859,25 +1966,71 @@ function renderAccountsSection() {
     return;
   } else {
     accounts.forEach((a) => {
-      const li = document.createElement("li");
-      li.className = "account-item";
+      const act = getAccountActivity(a.id);
       const bal = Number(a.balance) || 0;
       const balClass = a.type === "Liability" ? "negative" : "positive";
+      const hasActivity = act.inflows > 0 || act.outflows > 0 || act.transfersIn > 0 || act.transfersOut > 0;
+      const li = document.createElement("li");
+      li.className = "account-item account-card";
       li.innerHTML = `
-        <div class="account-info">
-          <span class="transaction-desc">${escapeHtml(a.name)}</span>
-          <span class="account-type">${escapeHtml(a.type)}</span>
-        </div>
-        <div class="transaction-right">
-          <span class="account-balance ${balClass}">${a.type === "Liability" ? "-" : ""}${formatCurrency(bal)}</span>
-          <div class="account-actions">
-            <button type="button" class="btn-edit">Edit</button>
-            <button type="button" class="delete-btn">Delete</button>
+        <div class="account-header" data-expand="${a.id}">
+          <div class="account-info">
+            <span class="transaction-desc">${escapeHtml(a.name)}</span>
+            <span class="account-type">${escapeHtml(a.type)}</span>
+            ${a.notes ? `<span class="account-notes">${escapeHtml(a.notes)}</span>` : ""}
+          </div>
+          <div class="transaction-right">
+            <span class="account-balance ${balClass}">${a.type === "Liability" ? "-" : ""}${formatCurrency(bal)}</span>
+            <div class="account-actions">
+              <button type="button" class="btn-edit">Edit</button>
+              <button type="button" class="delete-btn">Delete</button>
+            </div>
           </div>
         </div>
+        <div class="account-summary">
+          <span class="acc-meta">In: ${formatCurrency(act.inflows)}</span>
+          <span class="acc-meta">Out: ${formatCurrency(act.outflows)}</span>
+          <span class="acc-meta">Transfers in: ${formatCurrency(act.transfersIn)}</span>
+          <span class="acc-meta">Transfers out: ${formatCurrency(act.transfersOut)}</span>
+          ${act.lastActivity ? `<span class="acc-meta">Last activity: ${act.lastActivity}</span>` : ""}
+        </div>
+        <div class="account-detail hidden" id="accDetail-${a.id}"></div>
       `;
-      li.querySelector(".btn-edit").addEventListener("click", () => openAccountForm(a));
-      li.querySelector(".delete-btn").addEventListener("click", () => deleteAccount(a.id));
+      li.querySelector(".btn-edit").addEventListener("click", (e) => { e.stopPropagation(); openAccountForm(a); });
+      li.querySelector(".delete-btn").addEventListener("click", (e) => { e.stopPropagation(); deleteAccount(a.id); });
+      li.querySelector(".account-header").addEventListener("click", (e) => {
+        if (e.target.closest(".btn-edit, .delete-btn")) return;
+        const detail = li.querySelector(".account-detail");
+        if (!detail) return;
+        detail.classList.toggle("hidden");
+        if (!detail.classList.contains("hidden") && detail.innerHTML === "") {
+          const linkedTx = transactions.filter((t) => t.accountId === a.id);
+          const linkedTr = transfers.filter((t) => t.fromAccountId === a.id || t.toAccountId === a.id);
+          let html = "";
+          if (linkedTx.length > 0) {
+            html += "<div class='acc-detail-section'><h5>Linked transactions</h5><ul class='acc-tx-list'>";
+            linkedTx.slice(0, 10).forEach((t) => {
+              const amt = t.amount > 0 ? "+" + formatCurrency(t.amount) : "-" + formatCurrency(t.amount);
+              html += `<li><span>${escapeHtml(t.description)}</span><span>${amt}</span><span>${escapeHtml(t.date || "")}</span></li>`;
+            });
+            if (linkedTx.length > 10) html += `<li class='acc-more'>+${linkedTx.length - 10} more</li>`;
+            html += "</ul></div>";
+          }
+          if (linkedTr.length > 0) {
+            html += "<div class='acc-detail-section'><h5>Transfers</h5><ul class='acc-tx-list'>";
+            linkedTr.slice(0, 10).forEach((tr) => {
+              const from = accounts.find((x) => x.id === tr.fromAccountId)?.name || "?";
+              const to = accounts.find((x) => x.id === tr.toAccountId)?.name || "?";
+              const dir = tr.fromAccountId === a.id ? `→ ${to}` : `${from} →`;
+              html += `<li><span>${dir}</span><span>${formatCurrency(tr.amount)}</span><span>${escapeHtml(tr.date || "")}</span></li>`;
+            });
+            if (linkedTr.length > 10) html += `<li class='acc-more'>+${linkedTr.length - 10} more</li>`;
+            html += "</ul></div>";
+          }
+          if (!html) html = "<p class='empty-message'>No linked transactions or transfers.</p>";
+          detail.innerHTML = html;
+        }
+      });
       list.appendChild(li);
     });
   }
@@ -1944,27 +2097,48 @@ function addTransfer(fromId, toId, amount, date, note) {
   updateAllCharts();
 }
 
+function getFilteredTransfers() {
+  const accountFilter = document.getElementById("transferAccountFilter")?.value || "";
+  let list = [...transfers].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+  if (accountFilter) {
+    const aid = Number(accountFilter);
+    list = list.filter((t) => t.fromAccountId === aid || t.toAccountId === aid);
+  }
+  return list;
+}
+
 function renderTransferList() {
   const ul = document.getElementById("transferList");
-  if (!ul) return;
+  const filterEl = document.getElementById("transferAccountFilter");
+  if (filterEl) {
+    const current = filterEl.value;
+    filterEl.innerHTML = '<option value="">All accounts</option>';
+    accounts.forEach((a) => {
+      const opt = document.createElement("option");
+      opt.value = a.id;
+      opt.textContent = `${a.name} (${a.type})`;
+      if (String(a.id) === current) opt.selected = true;
+      filterEl.appendChild(opt);
+    });
+  }
   ul.innerHTML = "";
-  if (transfers.length === 0) {
+  const list = getFilteredTransfers();
+  if (list.length === 0) {
     const es = emptyState("No transfers yet", "Move money between accounts without affecting income or expenses.", "Add Transfer", "emptyStateAddTransfer");
-    ul.innerHTML = "";
     ul.appendChild(es);
     es.querySelector("#emptyStateAddTransfer")?.addEventListener("click", () => document.getElementById("transferAdd")?.click());
     return;
   }
-  transfers.slice(0, 20).forEach((t) => {
+  list.slice(0, 30).forEach((t) => {
     const from = accounts.find((a) => a.id === t.fromAccountId);
     const to = accounts.find((a) => a.id === t.toAccountId);
     const fromName = from ? from.name : "Unknown";
     const toName = to ? to.name : "Unknown";
     const li = document.createElement("li");
-    li.className = "transaction-item";
+    li.className = "transaction-item transfer-item";
     li.innerHTML = `
       <div class="transaction-info">
-        <span class="transaction-desc">${escapeHtml(fromName)} → ${escapeHtml(toName)}</span>
+        <span class="transaction-desc"><span class="transfer-out">${escapeHtml(fromName)}</span> → <span class="transfer-in">${escapeHtml(toName)}</span></span>
         <span class="transaction-meta">${escapeHtml(t.date)}${t.note ? " · " + escapeHtml(t.note) : ""}</span>
       </div>
       <span class="transaction-amount">${formatCurrency(t.amount)}</span>

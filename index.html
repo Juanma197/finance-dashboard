@@ -142,6 +142,7 @@
               <h3>All Accounts</h3>
               <button type="button" id="accountAdd">Add Account</button>
             </div>
+            <p class="panel-hint">Based on account balances. Click an account to see linked activity.</p>
             <ul id="accountList"></ul>
           </div>
         </section>
@@ -149,10 +150,10 @@
         <!-- Section 3: Cash Flow -->
         <section id="cash-flow" class="section">
           <div class="cash-summary">
-            <div class="card card-balance"><h3>Balance</h3><p id="cfBalance">£0.00</p></div>
-            <div class="card card-income"><h3>Income</h3><p id="cfIncome">£0.00</p></div>
-            <div class="card card-expenses"><h3>Expenses</h3><p id="cfExpenses">£0.00</p></div>
-            <div class="card card-savings"><h3>Savings Rate</h3><p id="cfSavingsRate">—</p></div>
+            <div class="card card-balance"><h3>Balance</h3><p id="cfBalance">£0.00</p><span class="metric-source" id="cfBalanceSource"></span></div>
+            <div class="card card-income"><h3>Income</h3><p id="cfIncome">£0.00</p><span class="metric-source" id="cfIncomeSource"></span></div>
+            <div class="card card-expenses"><h3>Expenses</h3><p id="cfExpenses">£0.00</p><span class="metric-source" id="cfExpensesSource"></span></div>
+            <div class="card card-savings"><h3>Savings Rate</h3><p id="cfSavingsRate">—</p><span class="metric-source">From transactions (excl. transfers)</span></div>
           </div>
           <div class="panel cf-analytics">
             <h3>Monthly Analytics</h3>
@@ -183,6 +184,15 @@
                   <option value="Business">Business</option>
                   <option value="Other">Other</option>
                 </select></label>
+                <label class="form-label">Account <select id="cfAccount"><option value="">None (unlinked)</option></select></label>
+                <label class="form-label">Contribution type <select id="cfContribution">
+                  <option value="">Regular (income/expense)</option>
+                  <option value="investment">Investment contribution</option>
+                  <option value="pension">Pension contribution</option>
+                  <option value="emergency">Emergency fund</option>
+                  <option value="debt">Debt payment</option>
+                  <option value="property">Property contribution</option>
+                </select></label>
                 <label class="form-label">Date <input type="date" id="cfDate" /></label>
                 <button type="submit">Add</button>
               </div>
@@ -193,6 +203,7 @@
               <h3>Transactions</h3>
               <div class="toolbar-controls">
                 <input type="text" id="cfSearch" placeholder="Search..." class="search-input" />
+                <select id="cfAccountFilter"><option value="">All accounts</option></select>
                 <select id="cfCategoryFilter"><option value="">All categories</option></select>
                 <select id="cfSort">
                   <option value="date-desc">Newest first</option>

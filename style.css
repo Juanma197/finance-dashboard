@@ -362,6 +362,14 @@ body {
   font-weight: 700;
 }
 
+.metric-source {
+  display: block;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+  font-weight: 400;
+}
+
 .card-balance p, .card-networth p { color: var(--accent); }
 .card-income p, .card-cash p { color: var(--accent-income); }
 .card-expenses p { color: var(--accent-expense); }
@@ -677,6 +685,33 @@ body {
 .review-upcoming h4 {
   font-size: 0.9rem;
   margin-bottom: 10px;
+}
+
+.review-source {
+  margin-bottom: 12px;
+}
+
+.review-contributions {
+  margin-top: 12px;
+}
+
+.review-contributions h4 {
+  font-size: 0.9rem;
+  margin-bottom: 8px;
+}
+
+.contrib-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.contrib-tag {
+  font-size: 0.8rem;
+  padding: 4px 10px;
+  background: rgba(59, 130, 246, 0.15);
+  border-radius: var(--radius-sm);
+  color: var(--accent);
 }
 
 /* UK Planning */
@@ -1367,8 +1402,8 @@ body {
 
 .account-item {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  align-items: stretch;
   padding: 14px 16px;
   background: var(--bg-primary);
   border-radius: var(--radius-sm);
@@ -1399,6 +1434,82 @@ body {
 
 .account-item .account-balance.positive { color: var(--accent-income); }
 .account-item .account-balance.negative { color: var(--accent-expense); }
+
+.account-item .account-header {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.account-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  padding: 8px 0 0;
+  margin-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 0.8rem;
+}
+
+.acc-meta {
+  color: var(--text-muted);
+}
+
+.account-detail {
+  padding: 12px 0 0;
+  margin-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.account-detail.hidden {
+  display: none !important;
+}
+
+.acc-detail-section {
+  margin-bottom: 12px;
+}
+
+.acc-detail-section:last-child {
+  margin-bottom: 0;
+}
+
+.acc-detail-section h5 {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 6px;
+}
+
+.acc-tx-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.acc-tx-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  font-size: 0.85rem;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.acc-tx-list li span:first-child {
+  flex: 1;
+  min-width: 0;
+}
+
+.acc-more {
+  color: var(--text-muted);
+  font-style: italic;
+}
 
 .account-item .account-actions {
   display: flex;
