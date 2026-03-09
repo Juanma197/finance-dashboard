@@ -103,27 +103,29 @@
             </div>
             <div id="setupChecklist" class="setup-checklist"></div>
           </div>
-          <div class="quick-actions">
-            <button type="button" class="quick-action-btn" data-quick="transaction">+ Transaction</button>
-            <button type="button" class="quick-action-btn" data-quick="account">+ Account</button>
-            <button type="button" class="quick-action-btn" data-quick="goal">+ Goal</button>
-            <button type="button" class="quick-action-btn" data-quick="snapshot">+ Snapshot</button>
-            <button type="button" class="quick-action-btn" data-quick="reminder">+ Reminder</button>
+          <div class="quick-actions-wrapper">
+            <div class="quick-actions" role="toolbar">
+              <button type="button" class="quick-action-btn" data-quick="transaction">+ Transaction</button>
+              <button type="button" class="quick-action-btn" data-quick="account">+ Account</button>
+              <button type="button" class="quick-action-btn" data-quick="goal">+ Goal</button>
+              <button type="button" class="quick-action-btn" data-quick="snapshot">+ Snapshot</button>
+              <button type="button" class="quick-action-btn" data-quick="reminder">+ Reminder</button>
+            </div>
           </div>
-          <div class="overview-hero">
-            <div class="hero-card">
+          <div class="overview-hero overview-mobile-priority">
+            <div class="hero-card overview-hero-main">
               <h3>Net Worth</h3>
               <p id="overviewNetWorth" class="hero-amount">£0.00</p>
               <span class="hero-subtext" id="overviewNetWorthTrend">Monthly change —</span>
               <div class="hero-trends" id="overviewNetWorthTrends"></div>
             </div>
-            <div class="overview-smart-cards">
+            <div class="overview-smart-cards overview-priority-surplus">
               <div class="card card-savings"><h3>Savings Rate</h3><p id="overviewSavingsRate">—</p></div>
               <div class="card card-fi"><h3>FI Progress</h3><p id="overviewFIProgress">—</p></div>
               <div class="card card-emergency"><h3>Emergency Fund</h3><p id="overviewEmergency">—</p></div>
               <div class="card card-surplus"><h3>Monthly Surplus</h3><p id="overviewSurplus">—</p></div>
             </div>
-            <div class="hero-kpis">
+            <div class="hero-kpis overview-priority-assets">
               <div class="card card-cash"><h3>Cash</h3><p id="overviewCash">£0.00</p></div>
               <div class="card card-inv"><h3>Investments</h3><p id="overviewInvestments">£0.00</p></div>
               <div class="card card-re"><h3>Real Estate</h3><p id="overviewRealEstate">£0.00</p></div>
@@ -132,7 +134,7 @@
               <div class="card card-tax"><h3>Tax Reserve</h3><p id="overviewTax">£0.00</p></div>
             </div>
           </div>
-          <div class="overview-charts">
+          <div class="overview-charts overview-secondary">
             <div class="panel chart-panel">
               <h3>Net Worth History</h3>
               <div class="chart-container"><canvas id="chartNetWorth"></canvas></div>
@@ -150,17 +152,17 @@
               <div id="assetsLiabInsight" class="allocation-insight"></div>
             </div>
           </div>
-          <div class="panel insights-preview">
+          <div class="panel insights-preview overview-priority-insights">
             <h3>Financial Insights</h3>
             <div id="overviewInsights" class="insights-list"></div>
           </div>
-          <div class="overview-grid">
+          <div class="overview-grid overview-priority-activity">
             <div class="overview-main">
               <div class="panel">
                 <h3>Monthly Money In vs Out</h3>
                 <div class="chart-container chart-bar"><canvas id="chartMonthlyInOut"></canvas></div>
               </div>
-              <div class="panel">
+              <div class="panel overview-recent-section">
                 <h3>Recent Transactions</h3>
                 <ul id="overviewTransactions"></ul>
               </div>
@@ -573,6 +575,29 @@
           </div>
         </section>
       </div>
+      <!-- Mobile bottom navigation -->
+      <nav id="bottomNav" class="bottom-nav" aria-label="Main navigation">
+        <button type="button" class="bottom-nav-item active" data-section="overview" aria-label="Overview">
+          <span class="bottom-nav-icon">📊</span>
+          <span class="bottom-nav-label">Home</span>
+        </button>
+        <button type="button" class="bottom-nav-item" data-section="accounts" aria-label="Accounts">
+          <span class="bottom-nav-icon">👛</span>
+          <span class="bottom-nav-label">Accounts</span>
+        </button>
+        <button type="button" class="bottom-nav-item" data-section="cash-flow" aria-label="Cash Flow">
+          <span class="bottom-nav-icon">💰</span>
+          <span class="bottom-nav-label">Cash</span>
+        </button>
+        <button type="button" class="bottom-nav-item" data-section="goals" aria-label="Goals">
+          <span class="bottom-nav-icon">🎯</span>
+          <span class="bottom-nav-label">Goals</span>
+        </button>
+        <button type="button" class="bottom-nav-item bottom-nav-more" id="bottomNavMore" aria-label="More">
+          <span class="bottom-nav-icon">☰</span>
+          <span class="bottom-nav-label">More</span>
+        </button>
+      </nav>
     </main>
   </div>
 

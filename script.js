@@ -245,6 +245,12 @@ function initNavigation() {
 
       closeMobileSidebar();
 
+      const bottomNav = document.getElementById("bottomNav");
+      const activeBottom = bottomNav?.querySelector(`.bottom-nav-item[data-section="${sectionId}"]`);
+      bottomNav?.querySelectorAll(".bottom-nav-item").forEach((b) => b.classList.remove("active"));
+      if (activeBottom) activeBottom.classList.add("active");
+      else document.getElementById("bottomNavMore")?.classList.add("active");
+
       if (sectionId === "cash-flow") { renderCashFlowSection(); renderInsuranceRecurringSection(); renderTransferList(); }
       if (sectionId === "overview") { renderOverviewSection(); updateAllCharts(); }
       if (sectionId === "accounts") renderAccountsSection();
@@ -273,6 +279,23 @@ function initMobileMenu() {
   });
 
   overlay?.addEventListener("click", () => closeMobileSidebar());
+
+  const bottomNav = document.getElementById("bottomNav");
+  const bottomNavItems = bottomNav?.querySelectorAll(".bottom-nav-item[data-section]");
+  const bottomNavMore = document.getElementById("bottomNavMore");
+
+  bottomNavItems?.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const sectionId = btn.dataset.section;
+      if (!sectionId) return;
+      const navBtn = document.querySelector(`.nav-item[data-section="${sectionId}"]`);
+      if (navBtn) navBtn.click();
+      bottomNav?.querySelectorAll(".bottom-nav-item").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+    });
+  });
+
+  bottomNavMore?.addEventListener("click", () => openMobileSidebar());
 }
 
 function switchToSection(sectionId, focusSelector) {
@@ -3226,15 +3249,15 @@ function renderAnalyticsSection() {
     const sorted = [...monthlySnapshots].sort((a, b) => b.month.localeCompare(a.month));
     sorted.forEach((s) => {
       tbody += `<tr>
-        <td>${escapeHtml(s.month)}</td>
-        <td>${formatCurrency(s.netWorth)}</td>
-        <td>${formatCurrency(s.cash)}</td>
-        <td>${formatCurrency(s.investments)}</td>
-        <td>${formatCurrency(s.realEstate)}</td>
-        <td>${formatCurrency(s.business)}</td>
-        <td>${formatCurrency(s.liabilities)}</td>
-        <td>${formatCurrency(s.income)}</td>
-        <td>${formatCurrency(s.expenses)}</td>
+        <td data-label="Month">${escapeHtml(s.month)}</td>
+        <td data-label="Net Worth">${formatCurrency(s.netWorth)}</td>
+        <td data-label="Cash">${formatCurrency(s.cash)}</td>
+        <td data-label="Investments">${formatCurrency(s.investments)}</td>
+        <td data-label="Real Estate">${formatCurrency(s.realEstate)}</td>
+        <td data-label="Business">${formatCurrency(s.business)}</td>
+        <td data-label="Liabilities">${formatCurrency(s.liabilities)}</td>
+        <td data-label="Income">${formatCurrency(s.income)}</td>
+        <td data-label="Expenses">${formatCurrency(s.expenses)}</td>
       </tr>`;
     });
     tbody += "</tbody>";
