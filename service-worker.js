@@ -2,7 +2,7 @@
  * Wealth OS - Service Worker
  * Caches core app files for offline loading.
  */
-const CACHE_NAME = 'wealth-os-v1';
+const CACHE_NAME = 'wealth-os-v2';
 
 self.addEventListener('install', (event) => {
   const base = new URL('./', self.location.href).href;
