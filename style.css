@@ -757,6 +757,25 @@ body {
 
 .panel-toolbar h3 { margin-bottom: 0; }
 
+.panel-toolbar-compact {
+  margin-bottom: 8px;
+}
+
+.link-btn,
+.see-all-btn {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 0;
+}
+
+.link-btn:hover,
+.see-all-btn:hover {
+  text-decoration: underline;
+}
+
 /* ===== Overview ===== */
 .overview-hero {
   margin-bottom: 28px;
@@ -2389,10 +2408,39 @@ body {
   }
 }
 
+/* ===== Responsive visibility utilities ===== */
+.mobile-only {
+  display: none !important;
+}
+
+@media (max-width: 768px) {
+  .mobile-only {
+    display: block !important;
+  }
+  .desktop-only,
+  .overview-mobile-hide {
+    display: none !important;
+  }
+}
+
+@media (min-width: 769px) {
+  .mobile-only {
+    display: none !important;
+  }
+  .mobile-fab,
+  #mobileFab {
+    display: none !important;
+  }
+}
+
 /* ===== Mobile breakpoint: off-canvas sidebar + bottom nav ===== */
 @media (max-width: 768px) {
   .mobile-menu-btn {
     display: flex;
+  }
+
+  .header-actions .header-quick {
+    display: none !important;
   }
 
   .sidebar-overlay:not(.hidden) {
@@ -2436,7 +2484,7 @@ body {
 
   .content {
     padding: 12px 14px;
-    padding-bottom: 88px;
+    padding-bottom: calc(88px + env(safe-area-inset-bottom));
   }
 
   /* Bottom navigation bar */
@@ -2482,7 +2530,120 @@ body {
     font-weight: 500;
   }
 
-  /* Quick actions: horizontal scroll */
+  /* Mobile FAB */
+  #mobileFab {
+    display: flex !important;
+    position: fixed;
+    bottom: 80px;
+    right: 16px;
+    z-index: 85;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 12px;
+  }
+
+
+  .mobile-fab-trigger {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+
+  .mobile-fab-trigger:hover {
+    background: var(--accent-hover);
+    transform: scale(1.05);
+  }
+
+  .mobile-fab-icon {
+    font-size: 1.75rem;
+    font-weight: 300;
+    line-height: 1;
+  }
+
+  .mobile-fab-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .mobile-fab-menu.hidden {
+    display: none !important;
+  }
+
+  .mobile-fab-menu:not(.hidden) {
+    display: flex;
+  }
+
+  .mobile-fab-action {
+    padding: 10px 16px;
+    background: var(--bg-secondary);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    white-space: nowrap;
+    cursor: pointer;
+    box-shadow: var(--shadow);
+  }
+
+  .mobile-fab-action:hover {
+    background: var(--bg-hover);
+  }
+
+  /* Mobile More screen */
+  .mobile-screen-header {
+    padding: 12px 0 16px;
+    margin-bottom: 8px;
+  }
+
+  .mobile-screen-header h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+  }
+
+  .mobile-more-cards {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .mobile-more-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: var(--bg-secondary);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: var(--radius);
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .mobile-more-card:hover {
+    background: var(--bg-hover);
+  }
+
+  .mobile-more-icon {
+    font-size: 1.25rem;
+  }
+
+  .mobile-more-label {
+    font-weight: 500;
+  }
+
+  /* Quick actions: horizontal scroll (desktop-only wrapper hides this on mobile) */
   .quick-actions-wrapper {
     margin-bottom: 14px;
     -webkit-overflow-scrolling: touch;
@@ -2628,13 +2789,50 @@ body {
     position: static;
   }
 
-  /* Transaction/account items: stacked cards */
+  .overview-recent-section .panel-toolbar,
+  .overview-recent-section .panel-toolbar-compact {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  #overviewTransactions {
+    max-height: 240px;
+  }
+
+  .overview-recent-section .transaction-preview,
+  .transaction-preview {
+    padding: 10px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    font-size: 0.9rem;
+  }
+
+  .overview-recent-section .transaction-preview:last-child {
+    border-bottom: none;
+  }
+
+  .reminders-panel .reminder-item {
+    padding: 10px 0;
+  }
+
+  .insights-preview .insight-item {
+    padding: 8px 0;
+  }
+
+  /* Transaction/account items: mobile-native style */
   .transaction-item,
   .account-item {
-    flex-direction: column;
-    align-items: stretch;
     padding: 12px 14px;
-    gap: 8px;
+    gap: 10px;
+  }
+
+  .account-item {
+    border-radius: var(--radius);
+    margin-bottom: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
   }
 
   .transaction-item .transaction-right,

@@ -249,6 +249,7 @@ function initNavigation() {
       const activeBottom = bottomNav?.querySelector(`.bottom-nav-item[data-section="${sectionId}"]`);
       bottomNav?.querySelectorAll(".bottom-nav-item").forEach((b) => b.classList.remove("active"));
       if (activeBottom) activeBottom.classList.add("active");
+      else if (sectionId === "mobile-more") document.getElementById("bottomNavMore")?.classList.add("active");
       else document.getElementById("bottomNavMore")?.classList.add("active");
 
       if (sectionId === "cash-flow") { renderCashFlowSection(); renderInsuranceRecurringSection(); renderTransferList(); }
@@ -295,7 +296,51 @@ function initMobileMenu() {
     });
   });
 
-  bottomNavMore?.addEventListener("click", () => openMobileSidebar());
+  bottomNavMore?.addEventListener("click", () => {
+    document.querySelectorAll(".section").forEach((s) => s.classList.remove("active"));
+    document.getElementById("mobile-more")?.classList.add("active");
+    document.getElementById("headerSubtitle").textContent = "More";
+    bottomNav?.querySelectorAll(".bottom-nav-item").forEach((b) => b.classList.remove("active"));
+    bottomNavMore?.classList.add("active");
+  });
+
+  document.querySelectorAll(".mobile-more-card").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const sectionId = btn.dataset.section;
+      const navBtn = document.querySelector(`.nav-item[data-section="${sectionId}"]`);
+      if (navBtn) navBtn.click();
+      bottomNav?.querySelectorAll(".bottom-nav-item").forEach((b) => b.classList.remove("active"));
+    });
+  });
+
+  document.querySelectorAll(".see-all-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const sectionId = btn.dataset.section;
+      if (!sectionId) return;
+      const navBtn = document.querySelector(`.nav-item[data-section="${sectionId}"]`);
+      navBtn?.click();
+      const bottomItem = bottomNav?.querySelector(`.bottom-nav-item[data-section="${sectionId}"]`);
+      bottomNav?.querySelectorAll(".bottom-nav-item").forEach((b) => b.classList.remove("active"));
+      if (bottomItem) bottomItem.classList.add("active");
+    });
+  });
+
+  const fab = document.getElementById("mobileFab");
+  const fabTrigger = document.getElementById("mobileFabTrigger");
+  const fabMenu = document.getElementById("mobileFabMenu");
+  fabTrigger?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    fabMenu?.classList.toggle("hidden");
+  });
+  document.addEventListener("click", () => fabMenu?.classList.add("hidden"));
+  fabMenu?.querySelectorAll(".mobile-fab-action").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      fabMenu?.classList.add("hidden");
+      const action = btn.dataset.quick;
+      document.querySelector(`.quick-action-btn[data-quick="${action}"]`)?.click();
+    });
+  });
 }
 
 function switchToSection(sectionId, focusSelector) {

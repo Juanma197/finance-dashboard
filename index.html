@@ -103,7 +103,7 @@
             </div>
             <div id="setupChecklist" class="setup-checklist"></div>
           </div>
-          <div class="quick-actions-wrapper">
+          <div class="quick-actions-wrapper desktop-only">
             <div class="quick-actions" role="toolbar">
               <button type="button" class="quick-action-btn" data-quick="transaction">+ Transaction</button>
               <button type="button" class="quick-action-btn" data-quick="account">+ Account</button>
@@ -112,7 +112,7 @@
               <button type="button" class="quick-action-btn" data-quick="reminder">+ Reminder</button>
             </div>
           </div>
-          <div class="overview-hero overview-mobile-priority">
+          <div class="overview-hero overview-mobile-priority mobile-home-hero">
             <div class="hero-card overview-hero-main">
               <h3>Net Worth</h3>
               <p id="overviewNetWorth" class="hero-amount">£0.00</p>
@@ -120,21 +120,21 @@
               <div class="hero-trends" id="overviewNetWorthTrends"></div>
             </div>
             <div class="overview-smart-cards overview-priority-surplus">
-              <div class="card card-savings"><h3>Savings Rate</h3><p id="overviewSavingsRate">—</p></div>
-              <div class="card card-fi"><h3>FI Progress</h3><p id="overviewFIProgress">—</p></div>
-              <div class="card card-emergency"><h3>Emergency Fund</h3><p id="overviewEmergency">—</p></div>
-              <div class="card card-surplus"><h3>Monthly Surplus</h3><p id="overviewSurplus">—</p></div>
+              <div class="card card-savings overview-mobile-hide"><h3>Savings Rate</h3><p id="overviewSavingsRate">—</p></div>
+              <div class="card card-fi overview-mobile-hide"><h3>FI Progress</h3><p id="overviewFIProgress">—</p></div>
+              <div class="card card-emergency overview-mobile-hide"><h3>Emergency Fund</h3><p id="overviewEmergency">—</p></div>
+              <div class="card card-surplus"><h3>Surplus</h3><p id="overviewSurplus">—</p></div>
             </div>
             <div class="hero-kpis overview-priority-assets">
               <div class="card card-cash"><h3>Cash</h3><p id="overviewCash">£0.00</p></div>
               <div class="card card-inv"><h3>Investments</h3><p id="overviewInvestments">£0.00</p></div>
-              <div class="card card-re"><h3>Real Estate</h3><p id="overviewRealEstate">£0.00</p></div>
-              <div class="card card-biz"><h3>Business</h3><p id="overviewBusiness">£0.00</p></div>
               <div class="card card-liabilities"><h3>Liabilities</h3><p id="overviewLiabilities">£0.00</p></div>
-              <div class="card card-tax"><h3>Tax Reserve</h3><p id="overviewTax">£0.00</p></div>
+              <div class="card card-re overview-mobile-hide"><h3>Real Estate</h3><p id="overviewRealEstate">£0.00</p></div>
+              <div class="card card-biz overview-mobile-hide"><h3>Business</h3><p id="overviewBusiness">£0.00</p></div>
+              <div class="card card-tax overview-mobile-hide"><h3>Tax Reserve</h3><p id="overviewTax">£0.00</p></div>
             </div>
           </div>
-          <div class="overview-charts overview-secondary">
+          <div class="overview-charts overview-secondary overview-mobile-hide">
             <div class="panel chart-panel">
               <h3>Net Worth History</h3>
               <div class="chart-container"><canvas id="chartNetWorth"></canvas></div>
@@ -158,15 +158,18 @@
           </div>
           <div class="overview-grid overview-priority-activity">
             <div class="overview-main">
-              <div class="panel">
+              <div class="panel overview-mobile-hide">
                 <h3>Monthly Money In vs Out</h3>
                 <div class="chart-container chart-bar"><canvas id="chartMonthlyInOut"></canvas></div>
               </div>
               <div class="panel overview-recent-section">
-                <h3>Recent Transactions</h3>
+                <div class="panel-toolbar panel-toolbar-compact">
+                  <h3>Recent Transactions</h3>
+                  <button type="button" class="link-btn see-all-btn" data-section="cash-flow" aria-label="See all transactions">See all</button>
+                </div>
                 <ul id="overviewTransactions"></ul>
               </div>
-              <div class="panel">
+              <div class="panel overview-mobile-hide">
                 <h3>Goals Progress</h3>
                 <div id="overviewGoals"></div>
               </div>
@@ -574,6 +577,64 @@
             <button type="button" id="clearDemoData" class="btn-secondary">Clear demo data</button>
           </div>
         </section>
+
+        <!-- Mobile More screen (links to Tax, Business, Analytics, etc.) -->
+        <section id="mobile-more" class="section mobile-only">
+          <div class="mobile-screen-header">
+            <h2>More</h2>
+          </div>
+          <div class="mobile-more-cards">
+            <button type="button" class="mobile-more-card" data-section="tax">
+              <span class="mobile-more-icon">📋</span>
+              <span class="mobile-more-label">Tax</span>
+            </button>
+            <button type="button" class="mobile-more-card" data-section="business">
+              <span class="mobile-more-icon">💼</span>
+              <span class="mobile-more-label">Business</span>
+            </button>
+            <button type="button" class="mobile-more-card" data-section="analytics">
+              <span class="mobile-more-icon">📊</span>
+              <span class="mobile-more-label">Analytics</span>
+            </button>
+            <button type="button" class="mobile-more-card" data-section="uk-planning">
+              <span class="mobile-more-icon">🇬🇧</span>
+              <span class="mobile-more-label">UK Planning</span>
+            </button>
+            <button type="button" class="mobile-more-card" data-section="insights">
+              <span class="mobile-more-icon">💡</span>
+              <span class="mobile-more-label">Insights</span>
+            </button>
+            <button type="button" class="mobile-more-card" data-section="investments">
+              <span class="mobile-more-icon">📈</span>
+              <span class="mobile-more-label">Investments</span>
+            </button>
+            <button type="button" class="mobile-more-card" data-section="real-estate">
+              <span class="mobile-more-icon">🏠</span>
+              <span class="mobile-more-label">Real Estate</span>
+            </button>
+            <button type="button" class="mobile-more-card" data-section="liabilities">
+              <span class="mobile-more-icon">📉</span>
+              <span class="mobile-more-label">Liabilities</span>
+            </button>
+            <button type="button" class="mobile-more-card" data-section="settings">
+              <span class="mobile-more-icon">⚙️</span>
+              <span class="mobile-more-label">Settings</span>
+            </button>
+          </div>
+        </section>
+      </div>
+      <!-- Mobile FAB (floating action button) -->
+      <div id="mobileFab" class="mobile-fab">
+        <button type="button" class="mobile-fab-trigger" id="mobileFabTrigger" aria-label="Add">
+          <span class="mobile-fab-icon">+</span>
+        </button>
+        <div id="mobileFabMenu" class="mobile-fab-menu hidden">
+          <button type="button" class="mobile-fab-action" data-quick="transaction">+ Transaction</button>
+          <button type="button" class="mobile-fab-action" data-quick="account">+ Account</button>
+          <button type="button" class="mobile-fab-action" data-quick="goal">+ Goal</button>
+          <button type="button" class="mobile-fab-action" data-quick="snapshot">+ Snapshot</button>
+          <button type="button" class="mobile-fab-action" data-quick="reminder">+ Reminder</button>
+        </div>
       </div>
       <!-- Mobile bottom navigation -->
       <nav id="bottomNav" class="bottom-nav" aria-label="Main navigation">
@@ -585,9 +646,9 @@
           <span class="bottom-nav-icon">👛</span>
           <span class="bottom-nav-label">Accounts</span>
         </button>
-        <button type="button" class="bottom-nav-item" data-section="cash-flow" aria-label="Cash Flow">
-          <span class="bottom-nav-icon">💰</span>
-          <span class="bottom-nav-label">Cash</span>
+        <button type="button" class="bottom-nav-item" data-section="cash-flow" aria-label="Activity">
+          <span class="bottom-nav-icon">📋</span>
+          <span class="bottom-nav-label">Activity</span>
         </button>
         <button type="button" class="bottom-nav-item" data-section="goals" aria-label="Goals">
           <span class="bottom-nav-icon">🎯</span>
