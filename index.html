@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Wealth OS Dashboard</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <div class="app-wrapper">
+    <!-- Mobile menu overlay (closes sidebar on tap outside) -->
+    <div id="sidebarOverlay" class="sidebar-overlay hidden" aria-hidden="true"></div>
+    <!-- Fixed left sidebar navigation -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-logo">
+        <span class="logo-icon">◆</span>
+        <span class="logo-text">Wealth OS</span>
+      </div>
+      <nav class="sidebar-nav">
+        <button class="nav-item active" data-section="overview">📊 Overview</button>
+        <button class="nav-item" data-section="accounts">👛 Accounts</button>
+        <button class="nav-item" data-section="cash-flow">💰 Cash Flow</button>
+        <button class="nav-item" data-section="investments">📈 Investments</button>
+        <button class="nav-item" data-section="real-estate">🏠 Real Estate</button>
+        <button class="nav-item" data-section="liabilities">📉 Liabilities</button>
+        <button class="nav-item" data-section="business">💼 Business</button>
+        <button class="nav-item" data-section="tax">📋 Tax</button>
+        <button class="nav-item" data-section="goals">🎯 Goals</button>
+        <button class="nav-item" data-section="analytics">📋 Analytics</button>
+        <button class="nav-item" data-section="settings">⚙️ Settings</button>
+      </nav>
+    </aside>
+
+    <!-- Main content area -->
+    <main class="main-area">
+      <!-- Top header bar -->
+      <header class="top-header">
+        <h1 class="header-title">Wealth OS</h1>
+        <span class="header-subtitle" id="headerSubtitle">Overview</span>
+      </header>
+
+      <div class="content">
+        <!-- Section 1: Overview (Command Center) -->
+        <section id="overview" class="section active">
+          <div class="quick-actions">
+            <button type="button" class="quick-action-btn" data-quick="transaction">+ Transaction</button>
+            <button type="button" class="quick-action-btn" data-quick="account">+ Account</button>
+            <button type="button" class="quick-action-btn" data-quick="goal">+ Goal</button>
+            <button type="button" class="quick-action-btn" data-quick="snapshot">+ Snapshot</button>
+            <button type="button" class="quick-action-btn" data-quick="reminder">+ Reminder</button>
+          </div>
+          <div class="overview-hero">
+            <div class="hero-card">
+              <h3>Net Worth</h3>
+              <p id="overviewNetWorth" class="hero-amount">£0.00</p>
+              <span class="hero-subtext" id="overviewNetWorthTrend">Monthly change —</span>
+              <div class="hero-trends" id="overviewNetWorthTrends"></div>
+            </div>
+            <div class="overview-smart-cards">
+              <div class="card card-savings"><h3>Savings Rate</h3><p id="overviewSavingsRate">—</p></div>
+              <div class="card card-fi"><h3>FI Progress</h3><p id="overviewFIProgress">—</p></div>
+              <div class="card card-emergency"><h3>Emergency Fund</h3><p id="overviewEmergency">—</p></div>
+              <div class="card card-surplus"><h3>Monthly Surplus</h3><p id="overviewSurplus">—</p></div>
+            </div>
+            <div class="hero-kpis">
+              <div class="card card-cash"><h3>Cash</h3><p id="overviewCash">£0.00</p></div>
+              <div class="card card-inv"><h3>Investments</h3><p id="overviewInvestments">£0.00</p></div>
+              <div class="card card-re"><h3>Real Estate</h3><p id="overviewRealEstate">£0.00</p></div>
+              <div class="card card-biz"><h3>Business</h3><p id="overviewBusiness">£0.00</p></div>
+              <div class="card card-liabilities"><h3>Liabilities</h3><p id="overviewLiabilities">£0.00</p></div>
+              <div class="card card-tax"><h3>Tax Reserve</h3><p id="overviewTax">£0.00</p></div>
+            </div>
+          </div>
+          <div class="overview-charts">
+            <div class="panel chart-panel">
+              <h3>Net Worth History</h3>
+              <div class="chart-container"><canvas id="chartNetWorth"></canvas></div>
+              <div class="nw-snapshot-form">
+                <button type="button" id="snapshotCreateCurrent">Create Snapshot (Current Month)</button>
+              </div>
+            </div>
+            <div class="panel chart-panel">
+              <h3>Investment Allocation</h3>
+              <div class="chart-container chart-doughnut"><canvas id="chartInvestments"></canvas></div>
+            </div>
+            <div class="panel chart-panel">
+              <h3>Assets vs Liabilities</h3>
+              <div class="chart-container chart-doughnut"><canvas id="chartAssetsLiab"></canvas></div>
+              <div id="assetsLiabInsight" class="allocation-insight"></div>
+            </div>
+          </div>
+          <div class="overview-grid">
+            <div class="overview-main">
+              <div class="panel">
+                <h3>Monthly Money In vs Out</h3>
+                <div class="chart-container chart-bar"><canvas id="chartMonthlyInOut"></canvas></div>
+              </div>
+              <div class="panel">
+                <h3>Recent Transactions</h3>
+                <ul id="overviewTransactions"></ul>
+              </div>
+              <div class="panel">
+                <h3>Goals Progress</h3>
+                <div id="overviewGoals"></div>
+              </div>
+            </div>
+            <div class="overview-sidebar">
+              <div class="panel reminders-panel">
+                <div class="panel-toolbar">
+                  <h3>Financial Calendar</h3>
+                  <button type="button" id="reminderAdd">Add</button>
+                </div>
+                <div id="remindersList"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Section 2: Accounts -->
+        <section id="accounts" class="section">
+          <div class="account-totals">
+            <div class="card card-cash"><h3>Total Cash</h3><p id="accTotalCash">£0.00</p></div>
+            <div class="card card-inv"><h3>Total Investments</h3><p id="accTotalInv">£0.00</p></div>
+            <div class="card card-re"><h3>Total Real Estate</h3><p id="accTotalRE">£0.00</p></div>
+            <div class="card card-liabilities"><h3>Total Liabilities</h3><p id="accTotalLiab">£0.00</p></div>
+          </div>
+          <div class="panel">
+            <div class="panel-toolbar">
+              <h3>All Accounts</h3>
+              <button type="button" id="accountAdd">Add Account</button>
+            </div>
+            <ul id="accountList"></ul>
+          </div>
+        </section>
+
+        <!-- Section 3: Cash Flow -->
+        <section id="cash-flow" class="section">
+          <div class="cash-summary">
+            <div class="card card-balance"><h3>Balance</h3><p id="cfBalance">£0.00</p></div>
+            <div class="card card-income"><h3>Income</h3><p id="cfIncome">£0.00</p></div>
+            <div class="card card-expenses"><h3>Expenses</h3><p id="cfExpenses">£0.00</p></div>
+            <div class="card card-savings"><h3>Savings Rate</h3><p id="cfSavingsRate">—</p></div>
+          </div>
+          <div class="panel cf-analytics">
+            <h3>Monthly Analytics</h3>
+            <div class="analytics-grid">
+              <div class="analytics-item"><span class="label">Transactions</span><span id="cfCount">0</span></div>
+              <div class="analytics-item"><span class="label">Largest Expense</span><span id="cfLargestExpense">—</span></div>
+              <div class="analytics-item"><span class="label">Largest Income</span><span id="cfLargestIncome">—</span></div>
+              <div class="analytics-item"><span class="label">Avg Expense</span><span id="cfAvgExpense">—</span></div>
+              <div class="analytics-item"><span class="label">Avg Income</span><span id="cfAvgIncome">—</span></div>
+            </div>
+            <h4 class="spending-heading">Spending by Category</h4>
+            <div id="cfCategoryBreakdown" class="category-breakdown"></div>
+          </div>
+          <div class="panel">
+            <h3>Add Transaction</h3>
+            <form id="transactionForm">
+              <div class="form-row">
+                <label class="form-label">Description <input type="text" id="cfDescription" placeholder="e.g. Salary, Groceries" required /></label>
+                <label class="form-label">Amount (£) <input type="number" id="cfAmount" placeholder="Positive = income, negative = expense" step="0.01" required /></label>
+                <label class="form-label">Category
+                <select id="cfCategory">
+                  <option value="Salary">Salary</option>
+                  <option value="Food">Food</option>
+                  <option value="Transport">Transport</option>
+                  <option value="Bills">Bills</option>
+                  <option value="Shopping">Shopping</option>
+                  <option value="Entertainment">Entertainment</option>
+                  <option value="Business">Business</option>
+                  <option value="Other">Other</option>
+                </select></label>
+                <label class="form-label">Date <input type="date" id="cfDate" /></label>
+                <button type="submit">Add</button>
+              </div>
+            </form>
+          </div>
+          <div class="panel">
+            <div class="panel-toolbar">
+              <h3>Transactions</h3>
+              <div class="toolbar-controls">
+                <input type="text" id="cfSearch" placeholder="Search..." class="search-input" />
+                <select id="cfCategoryFilter"><option value="">All categories</option></select>
+                <select id="cfSort">
+                  <option value="date-desc">Newest first</option>
+                  <option value="date-asc">Oldest first</option>
+                  <option value="amount-desc">Amount high→low</option>
+                  <option value="amount-asc">Amount low→high</option>
+                </select>
+                <button type="button" id="cfClearAll" class="btn-danger">Clear All</button>
+              </div>
+            </div>
+            <ul id="cfTransactions"></ul>
+          </div>
+          <div class="panel">
+            <div class="panel-toolbar">
+              <h3>Transfers</h3>
+              <button type="button" id="transferAdd">Add Transfer</button>
+            </div>
+            <ul id="transferList"></ul>
+          </div>
+          <div class="panel">
+            <h3>Insurance & Recurring Obligations</h3>
+            <div class="insurance-recurring-grid">
+              <div class="recurring-block">
+                <h4>Recurring Obligations</h4>
+                <div id="recurringList"></div>
+                <p class="total-monthly">Total monthly: <span id="recurringTotal">£0.00</span></p>
+                <button type="button" id="recurringAdd">Add</button>
+              </div>
+              <div class="insurance-block">
+                <h4>Insurance</h4>
+                <div id="insuranceList"></div>
+                <p class="total-monthly">Monthly equivalent: <span id="insuranceMonthlyTotal">£0.00</span></p>
+                <p class="upcoming-renewals">Upcoming renewals: <span id="upcomingRenewals">—</span></p>
+                <button type="button" id="insuranceAdd">Add</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Section 4: Investments -->
+        <section id="investments" class="section">
+          <div class="invest-summary">
+            <div class="card inv-card-total"><h3>Total Invested</h3><p id="invTotal">£0.00</p></div>
+            <div class="card inv-card-emergency">
+              <h3>Emergency Fund</h3>
+              <p id="invEmergencyMonths">—</p>
+              <div class="emergency-progress"><div class="emergency-progress-fill" id="invEmergencyProgress" style="width:0%"></div></div>
+              <p id="invEmergencyNeeded" class="emergency-needed"></p>
+            </div>
+          </div>
+          <div class="panel inv-breakdown">
+            <div class="panel-toolbar">
+              <h3>Investment & Retirement Accounts</h3>
+              <button type="button" id="invAddAccount">Add Account</button>
+            </div>
+            <div id="investAccountsList" class="account-cards"></div>
+          </div>
+          <div class="panel inv-allocation">
+            <h3>Allocation Summary</h3>
+            <div id="invAllocationVisual" class="allocation-visual"></div>
+            <div id="invAllocation" class="inv-allocation-text"></div>
+            <div id="invAllocationInsight" class="allocation-insight"></div>
+          </div>
+        </section>
+
+        <!-- Section 5: Liabilities -->
+        <section id="liabilities" class="section">
+          <div class="liab-summary">
+            <div class="card card-liab-total"><h3>Total Liabilities</h3><p id="liabTotal">£0.00</p></div>
+          </div>
+          <div class="panel">
+            <div class="panel-toolbar">
+              <h3>Liability Accounts</h3>
+              <button type="button" id="liabAddAccount">Add Account</button>
+            </div>
+            <ul id="liabList"></ul>
+          </div>
+        </section>
+
+        <!-- Section 6: Real Estate -->
+        <section id="real-estate" class="section">
+          <div class="panel">
+            <div class="panel-toolbar">
+              <h3>Real Estate Accounts</h3>
+              <button type="button" id="reAddAccount">Add Account</button>
+            </div>
+            <div id="reTotalEquity" class="card-inline">Total: <span id="reEquityVal">£0.00</span></div>
+            <ul id="reAccountsList"></ul>
+          </div>
+        </section>
+
+        <!-- Section 7: Business -->
+        <section id="business" class="section">
+          <div class="panel">
+            <h3>Business Finance</h3>
+            <div class="business-grid">
+              <label>Business Income <input type="number" id="bizIncome" step="0.01" /></label>
+              <label>Business Expenses <input type="number" id="bizExpenses" step="0.01" /></label>
+              <label>Business Cash Balance <input type="number" id="bizCash" step="0.01" /></label>
+              <label>Tax Reserve <input type="number" id="bizTaxReserve" step="0.01" /></label>
+            </div>
+            <label class="full-width">Notes <textarea id="bizNotes" rows="3"></textarea></label>
+            <div class="card-inline">Profit estimate: <span id="bizProfit">£0.00</span></div>
+          </div>
+        </section>
+
+        <!-- Section 8: Tax -->
+        <section id="tax" class="section">
+          <div class="panel">
+            <h3>Tax Overview</h3>
+            <div class="tax-grid">
+              <label>Personal Tax Owed <input type="number" id="taxPersonal" step="0.01" /></label>
+              <label>Business Tax Owed <input type="number" id="taxBusiness" step="0.01" /></label>
+              <label>Tax Set Aside <input type="number" id="taxSetAside" step="0.01" /></label>
+              <label>Next Deadline <input type="text" id="taxDeadline" placeholder="e.g. 31 Jan 2026" /></label>
+            </div>
+            <div class="tax-summary">
+              <p>Total estimated tax: <span id="taxTotal">£0.00</span></p>
+              <p>Tax reserve gap/surplus: <span id="taxGap">£0.00</span></p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Section 9: Goals -->
+        <section id="goals" class="section">
+          <div class="panel fi-progress-panel">
+            <h3>Financial Independence Progress</h3>
+            <div id="goalsFIProgress"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-toolbar">
+              <h3>Savings & Investing Goals</h3>
+              <button type="button" id="goalsAdd">Add Goal</button>
+            </div>
+            <div id="goalsList"></div>
+          </div>
+        </section>
+
+        <!-- Section 10: Analytics -->
+        <section id="analytics" class="section">
+          <div class="panel">
+            <div class="panel-toolbar">
+              <h3>Monthly Snapshots</h3>
+              <button type="button" id="analyticsCreateSnapshot">Create Snapshot</button>
+            </div>
+            <div class="snapshots-table-wrap">
+              <table class="snapshots-table" id="snapshotsTable"></table>
+            </div>
+          </div>
+          <div class="analytics-grid">
+            <div class="panel"><h3>Net Worth Trend</h3><div class="chart-container"><canvas id="chartAnalyticsNetWorth"></canvas></div></div>
+            <div class="panel"><h3>Money In vs Out</h3><div class="chart-container"><canvas id="chartAnalyticsInOut"></canvas></div></div>
+            <div class="panel"><h3>Savings Rate Trend</h3><div class="chart-container"><canvas id="chartAnalyticsSavings"></canvas></div></div>
+          </div>
+          <div class="panel">
+            <h3>Asset Mix Summary</h3>
+            <div id="analyticsAssetMix"></div>
+          </div>
+          <div class="panel">
+            <h3>Upcoming Important Dates</h3>
+            <div id="analyticsUpcoming"></div>
+          </div>
+        </section>
+
+        <!-- Section 11: Settings -->
+        <section id="settings" class="section">
+          <div class="panel">
+            <h3>Settings</h3>
+            <div class="settings-grid">
+              <label>Monthly Salary Default <input type="number" id="setSalary" step="0.01" /></label>
+              <label>Monthly Essential Expenses <input type="number" id="setExpenses" step="0.01" /></label>
+              <label>Emergency Fund Target (months) <input type="number" id="setEmergencyMonths" min="1" /></label>
+              <label>Theme <select id="setTheme"><option value="dark">Dark</option><option value="light">Light (placeholder)</option></select></label>
+            </div>
+            <h4 class="settings-sub">FIRE / Financial Independence</h4>
+            <div class="settings-grid">
+              <label>Annual Essential Expenses <input type="number" id="setAnnualExpenses" step="0.01" placeholder="e.g. 24000" /></label>
+              <label>FIRE Multiplier <input type="number" id="setFireMultiplier" min="20" value="25" placeholder="25 = 4% rule" /></label>
+              <label>Target Passive Income <input type="number" id="setTargetPassive" step="0.01" placeholder="Optional" /></label>
+            </div>
+            <button type="button" id="settingsSave">Save Settings</button>
+          </div>
+          <div class="panel panel-backup">
+            <h3>Data &amp; Backup</h3>
+            <p class="backup-explanation">Wealth OS stores all data locally in your browser. Export regularly to keep a backup. Imports replace current data after confirmation.</p>
+            <div class="backup-actions">
+              <button type="button" id="exportData" class="btn-backup">Export Data</button>
+              <button type="button" id="importData" class="btn-backup">Import Data</button>
+              <input type="file" id="importFileInput" accept=".json" class="input-file-hidden" />
+            </div>
+            <p id="backupStatus" class="backup-status"></p>
+            <div class="reset-section">
+              <button type="button" id="resetData" class="btn-danger">Reset App Data</button>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <!-- Add/Edit Account modal -->
+  <div id="accountFormOverlay" class="overlay hidden">
+    <div class="modal">
+      <h3 id="accountFormTitle">Add Account</h3>
+      <form id="accountForm">
+        <input type="hidden" id="accountId" />
+        <label>Account Name <input type="text" id="accountName" placeholder="e.g. Current Account" required /></label>
+        <label>Type
+          <select id="accountType">
+            <option value="Cash">Cash</option>
+            <option value="Investment">Investment</option>
+            <option value="Retirement">Retirement</option>
+            <option value="Real Estate">Real Estate</option>
+            <option value="Business">Business</option>
+            <option value="Liability">Liability</option>
+          </select>
+        </label>
+        <label>Current Balance (£) <input type="number" id="accountBalance" step="0.01" placeholder="0.00" required /></label>
+        <label>Notes <input type="text" id="accountNotes" placeholder="Optional" /></label>
+        <div class="modal-actions">
+          <button type="button" id="accountCancel">Cancel</button>
+          <button type="submit">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Add Insurance modal -->
+  <div id="insuranceFormOverlay" class="overlay hidden">
+    <div class="modal">
+      <h3>Add Insurance</h3>
+      <form id="insuranceForm">
+        <label>Name <input type="text" id="insName" required /></label>
+        <label>Type
+          <select id="insType">
+            <option value="Car Insurance">Car Insurance</option>
+            <option value="Home Insurance">Home Insurance</option>
+            <option value="Landlord Insurance">Landlord Insurance</option>
+            <option value="Life Insurance">Life Insurance</option>
+            <option value="Income Protection">Income Protection</option>
+            <option value="Health">Health</option>
+            <option value="Business Insurance">Business Insurance</option>
+            <option value="Other">Other</option>
+          </select>
+        </label>
+        <label>Cost <input type="number" id="insCost" step="0.01" required placeholder="Amount" /></label>
+        <label>Frequency <select id="insFreq"><option value="monthly">Monthly</option><option value="annual">Annual</option></select></label>
+        <label>Renewal Date <input type="text" id="insRenewal" placeholder="e.g. 15 Mar 2026" /></label>
+        <label>Notes <input type="text" id="insNotes" /></label>
+        <div class="modal-actions">
+          <button type="button" id="insCancel">Cancel</button>
+          <button type="submit">Add</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Add Recurring modal (expanded) -->
+  <div id="recurringFormOverlay" class="overlay hidden">
+    <div class="modal">
+      <h3>Add Recurring Item</h3>
+      <form id="recurringForm">
+        <label>Name <input type="text" id="recName" required placeholder="e.g. Salary, Rent" /></label>
+        <label>Type
+          <select id="recType">
+            <option value="Salary">Salary</option>
+            <option value="Rent">Rent / Mortgage</option>
+            <option value="Utilities">Utilities</option>
+            <option value="Phone">Phone</option>
+            <option value="Subscriptions">Subscriptions</option>
+            <option value="Insurance">Insurance</option>
+            <option value="Pension">Pension Contributions</option>
+            <option value="Council Tax">Council Tax</option>
+            <option value="Internet">Internet</option>
+            <option value="Other">Other</option>
+          </select>
+        </label>
+        <label>Amount (£) <input type="number" id="recAmount" step="0.01" required /></label>
+        <label>Frequency <select id="recFreq"><option value="monthly">Monthly</option><option value="yearly">Yearly</option></select></label>
+        <label>Next Due Date <input type="date" id="recNextDue" /></label>
+        <label>Notes <input type="text" id="recNotes" /></label>
+        <div class="modal-actions">
+          <button type="button" id="recCancel">Cancel</button>
+          <button type="submit">Add</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Transfer modal -->
+  <div id="transferFormOverlay" class="overlay hidden">
+    <div class="modal">
+      <h3>Add Transfer</h3>
+      <form id="transferForm">
+        <label>From Account <select id="transferFrom"></select></label>
+        <label>To Account <select id="transferTo"></select></label>
+        <label>Amount (£) <input type="number" id="transferAmount" step="0.01" required /></label>
+        <label>Date <input type="date" id="transferDate" /></label>
+        <label>Note <input type="text" id="transferNote" /></label>
+        <div class="modal-actions">
+          <button type="button" id="transferCancel">Cancel</button>
+          <button type="submit">Transfer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Snapshot modal (confirm overwrite) -->
+  <div id="snapshotConfirmOverlay" class="overlay hidden">
+    <div class="modal">
+      <h3>Snapshot Exists</h3>
+      <p id="snapshotConfirmMessage">A snapshot for this month already exists. Overwrite?</p>
+      <div class="modal-actions">
+        <button type="button" id="snapshotConfirmCancel">Cancel</button>
+        <button type="button" id="snapshotConfirmOverwrite">Overwrite</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Reminder modal -->
+  <div id="reminderFormOverlay" class="overlay hidden">
+    <div class="modal">
+      <h3>Add Reminder</h3>
+      <form id="reminderForm">
+        <label>Title <input type="text" id="reminderTitle" required /></label>
+        <label>Type
+          <select id="reminderType">
+            <option value="Payday">Payday</option>
+            <option value="Rent/Mortgage">Rent/Mortgage</option>
+            <option value="Tax Deadline">Tax Deadline</option>
+            <option value="Insurance Renewal">Insurance Renewal</option>
+            <option value="Subscription Renewal">Subscription Renewal</option>
+            <option value="Custom">Custom</option>
+          </select>
+        </label>
+        <label>Date <input type="date" id="reminderDate" required /></label>
+        <label>Notes <input type="text" id="reminderNotes" /></label>
+        <div class="modal-actions">
+          <button type="button" id="reminderCancel">Cancel</button>
+          <button type="submit">Add</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Add Goal modal -->
+  <div id="goalFormOverlay" class="overlay hidden">
+    <div class="modal">
+      <h3>Add Goal</h3>
+      <form id="goalForm">
+        <label>Goal Name <input type="text" id="goalName" required /></label>
+        <label>Target Amount (£) <input type="number" id="goalTarget" step="0.01" required /></label>
+        <label>Current Amount (£) <input type="number" id="goalCurrent" step="0.01" value="0" /></label>
+        <div class="modal-actions">
+          <button type="button" id="goalCancel">Cancel</button>
+          <button type="submit">Add Goal</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
+
