@@ -12,9 +12,38 @@
   <link rel="apple-touch-icon" href="icons/icon.svg" />
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
 <body>
-  <div class="app-wrapper">
+  <!-- Auth screen (shown when Supabase configured and not logged in) -->
+  <div id="authScreen" class="auth-screen hidden">
+    <div class="auth-card">
+      <div class="auth-header">
+        <span class="logo-icon">◆</span>
+        <h1>Wealth OS</h1>
+        <p class="auth-subtitle">Sign in to sync your data across devices</p>
+      </div>
+      <div id="authTabs" class="auth-tabs">
+        <button type="button" class="auth-tab active" data-tab="signin">Sign in</button>
+        <button type="button" class="auth-tab" data-tab="signup">Sign up</button>
+      </div>
+      <form id="authForm" class="auth-form">
+        <div class="form-group">
+          <label class="form-label" for="authEmail">Email</label>
+          <input type="email" id="authEmail" required placeholder="you@example.com" autocomplete="email" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="authPassword">Password</label>
+          <input type="password" id="authPassword" required placeholder="••••••••" autocomplete="current-password" minlength="6" />
+        </div>
+        <p id="authError" class="auth-error hidden"></p>
+        <button type="submit" id="authSubmit" class="btn-primary auth-submit">Sign in</button>
+      </form>
+      <p class="auth-footer">Your data stays private. No tracking.</p>
+    </div>
+  </div>
+
+  <div id="appWrapper" class="app-wrapper">
     <!-- Mobile menu overlay (closes sidebar on tap outside) -->
     <div id="sidebarOverlay" class="sidebar-overlay hidden" aria-hidden="true"></div>
     <!-- Fixed left sidebar navigation -->
@@ -58,6 +87,7 @@
             <button type="button" class="quick-action-btn header-quick" data-quick="transaction" title="Add Transaction">+ Transaction</button>
             <button type="button" class="quick-action-btn header-quick" data-quick="account" title="Add Account">+ Account</button>
             <button type="button" class="quick-action-btn header-quick" data-quick="goal" title="Add Goal">+ Goal</button>
+            <button type="button" id="logoutBtn" class="btn-secondary header-logout hidden" title="Sign out">Sign out</button>
           </div>
         </div>
       </header>
@@ -768,6 +798,10 @@
     </div>
   </div>
 
+  <script src="config.js"></script>
+  <script src="supabase-client.js"></script>
+  <script src="supabase-auth.js"></script>
+  <script src="supabase-sync.js"></script>
   <script src="script.js"></script>
   <script>
     if ('serviceWorker' in navigator) {

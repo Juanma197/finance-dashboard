@@ -2,6 +2,9 @@
  * Wealth OS Dashboard - Main Script
  * Account-based architecture: all financial totals derived from accounts
  * Plain HTML, CSS, JavaScript only - no frameworks
+ *
+ * Supabase: when config.js has URL + anon key, auth and cloud sync are enabled.
+ * When not configured, app runs locally with localStorage only.
  */
 
 /* ========== Storage Keys ========== */
@@ -677,7 +680,11 @@ function loadAll() {
 }
 
 function saveUkAllowances() {
-  localStorage.setItem(KEYS.ukAllowances, JSON.stringify(ukAllowances));
+  if (window.WealthOSSync?.saveWithSync) {
+    window.WealthOSSync.saveWithSync("ukAllowances", ukAllowances);
+  } else {
+    localStorage.setItem(KEYS.ukAllowances, JSON.stringify(ukAllowances));
+  }
 }
 
 /**
@@ -708,7 +715,11 @@ function getAccountTotals() {
 }
 
 function saveAccounts() {
-  localStorage.setItem(KEYS.accounts, JSON.stringify(accounts));
+  if (window.WealthOSSync?.saveWithSync) {
+    window.WealthOSSync.saveWithSync("accounts", accounts);
+  } else {
+    localStorage.setItem(KEYS.accounts, JSON.stringify(accounts));
+  }
 }
 
 /**
@@ -753,59 +764,115 @@ function migrateToAccounts() {
 }
 
 function saveTransactions() {
-  localStorage.setItem(KEYS.transactions, JSON.stringify(transactions));
+  if (window.WealthOSSync?.saveWithSync) {
+    window.WealthOSSync.saveWithSync("transactions", transactions);
+  } else {
+    localStorage.setItem(KEYS.transactions, JSON.stringify(transactions));
+  }
 }
 
 function saveInvestments() {
-  localStorage.setItem(KEYS.investments, JSON.stringify(investments));
+  if (window.WealthOSSync?.saveWithSync) {
+    window.WealthOSSync.saveWithSync("investments", investments);
+  } else {
+    localStorage.setItem(KEYS.investments, JSON.stringify(investments));
+  }
 }
 
 function saveProperties() {
-  localStorage.setItem(KEYS.properties, JSON.stringify(properties));
+  if (window.WealthOSSync?.saveWithSync) {
+    window.WealthOSSync.saveWithSync("properties", properties);
+  } else {
+    localStorage.setItem(KEYS.properties, JSON.stringify(properties));
+  }
 }
 
 function saveLiabilities() {
-  localStorage.setItem(KEYS.liabilities, JSON.stringify(liabilities));
+  if (window.WealthOSSync?.saveWithSync) {
+    window.WealthOSSync.saveWithSync("liabilities", liabilities);
+  } else {
+    localStorage.setItem(KEYS.liabilities, JSON.stringify(liabilities));
+  }
 }
 
 function saveInsurance() {
-  localStorage.setItem(KEYS.insurance, JSON.stringify(insurance));
+  if (window.WealthOSSync?.saveWithSync) {
+    window.WealthOSSync.saveWithSync("insurance", insurance);
+  } else {
+    localStorage.setItem(KEYS.insurance, JSON.stringify(insurance));
+  }
 }
 
 function saveRecurring() {
-  localStorage.setItem(KEYS.recurring, JSON.stringify(recurring));
+  if (window.WealthOSSync?.saveWithSync) {
+    window.WealthOSSync.saveWithSync("recurring", recurring);
+  } else {
+    localStorage.setItem(KEYS.recurring, JSON.stringify(recurring));
+  }
 }
 
 function saveBusiness() {
-  localStorage.setItem(KEYS.business, JSON.stringify(business));
+  if (window.WealthOSSync?.saveWithSync) {
+    window.WealthOSSync.saveWithSync("business", business);
+  } else {
+    localStorage.setItem(KEYS.business, JSON.stringify(business));
+  }
 }
 
 function saveTax() {
-  localStorage.setItem(KEYS.tax, JSON.stringify(tax));
+  if (window.WealthOSSync?.saveWithSync) {
+    window.WealthOSSync.saveWithSync("tax", tax);
+  } else {
+    localStorage.setItem(KEYS.tax, JSON.stringify(tax));
+  }
 }
 
 function saveGoals() {
-  localStorage.setItem(KEYS.goals, JSON.stringify(goals));
+  if (window.WealthOSSync?.saveWithSync) {
+    window.WealthOSSync.saveWithSync("goals", goals);
+  } else {
+    localStorage.setItem(KEYS.goals, JSON.stringify(goals));
+  }
 }
 
 function saveSettings() {
-  localStorage.setItem(KEYS.settings, JSON.stringify(settings));
+  if (window.WealthOSSync?.saveWithSync) {
+    window.WealthOSSync.saveWithSync("settings", settings);
+  } else {
+    localStorage.setItem(KEYS.settings, JSON.stringify(settings));
+  }
 }
 
 function saveNetWorthSnapshots() {
-  localStorage.setItem(KEYS.netWorthSnapshots, JSON.stringify(netWorthSnapshots));
+  if (window.WealthOSSync?.saveWithSync) {
+    window.WealthOSSync.saveWithSync("netWorthSnapshots", netWorthSnapshots);
+  } else {
+    localStorage.setItem(KEYS.netWorthSnapshots, JSON.stringify(netWorthSnapshots));
+  }
 }
 
 function saveMonthlySnapshots() {
-  localStorage.setItem(KEYS.monthlySnapshots, JSON.stringify(monthlySnapshots));
+  if (window.WealthOSSync?.saveWithSync) {
+    window.WealthOSSync.saveWithSync("monthlySnapshots", monthlySnapshots);
+  } else {
+    localStorage.setItem(KEYS.monthlySnapshots, JSON.stringify(monthlySnapshots));
+  }
 }
 
 function saveTransfers() {
-  localStorage.setItem(KEYS.transfers, JSON.stringify(transfers));
+  if (window.WealthOSSync?.saveWithSync) {
+    window.WealthOSSync.saveWithSync("transfers", transfers);
+  } else {
+    localStorage.setItem(KEYS.transfers, JSON.stringify(transfers));
+  }
 }
 
 function saveReminders() {
-  localStorage.setItem(KEYS.reminders, JSON.stringify(reminders));
+  if (window.WealthOSSync?.saveWithSync) {
+    window.WealthOSSync.saveWithSync("reminders", reminders);
+  } else {
+    localStorage.setItem(KEYS.reminders, JSON.stringify(reminders));
+  }
 }
 
 /* ========== Export / Import / Backup ==========
@@ -3263,8 +3330,85 @@ function updateAnalyticsCharts() {
   }
 }
 
-/* ========== Init ========== */
-function init() {
+/* ========== Auth & Bootstrap ==========
+ * When Supabase is configured: show login if not authenticated; else load from cloud and run app.
+ * When not configured: run app with localStorage only.
+ */
+function showAuthScreen(show) {
+  const authEl = document.getElementById("authScreen");
+  const appEl = document.getElementById("appWrapper");
+  if (authEl) authEl.classList.toggle("hidden", !show);
+  if (appEl) appEl.classList.toggle("hidden", show);
+}
+
+function showLogoutButton(show) {
+  const btn = document.getElementById("logoutBtn");
+  if (btn) btn.classList.toggle("hidden", !show);
+}
+
+function initAuth() {
+  const form = document.getElementById("authForm");
+  const tabs = document.getElementById("authTabs");
+  const submitBtn = document.getElementById("authSubmit");
+  const errorEl = document.getElementById("authError");
+
+  let mode = "signin";
+
+  function showError(msg) {
+    if (errorEl) {
+      errorEl.textContent = msg || "";
+      errorEl.classList.toggle("hidden", !msg);
+    }
+  }
+
+  tabs?.addEventListener("click", (e) => {
+    const tab = e.target.closest(".auth-tab");
+    if (!tab) return;
+    tabs.querySelectorAll(".auth-tab").forEach((t) => t.classList.remove("active"));
+    tab.classList.add("active");
+    mode = tab.dataset.tab || "signin";
+    submitBtn.textContent = mode === "signup" ? "Create account" : "Sign in";
+    showError("");
+  });
+
+  form?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    showError("");
+    const email = document.getElementById("authEmail")?.value?.trim();
+    const password = document.getElementById("authPassword")?.value;
+    if (!email || !password) {
+      showError("Please enter email and password.");
+      return;
+    }
+    submitBtn.disabled = true;
+
+    if (mode === "signup") {
+      const { error } = await WealthOSAuth.signUp(email, password);
+      if (error) {
+        showError(error.message || "Sign up failed.");
+        submitBtn.disabled = false;
+        return;
+      }
+      showError("Check your email to confirm your account.");
+    } else {
+      const { error } = await WealthOSAuth.signIn(email, password);
+      if (error) {
+        showError(error.message || "Sign in failed.");
+        submitBtn.disabled = false;
+        return;
+      }
+      showAuthScreen(false);
+      showLogoutButton(true);
+      bootstrapApp();
+    }
+    submitBtn.disabled = false;
+  });
+}
+
+async function bootstrapApp() {
+  if (window.WealthOSSync?.loadWithSync) {
+    await window.WealthOSSync.loadWithSync();
+  }
   loadAll();
   initOnboarding();
   initSetupChecklist();
@@ -3284,7 +3428,6 @@ function init() {
   initUKSection();
   initSettingsSection();
 
-  // Initial render of all sections
   renderSetupChecklist();
   renderOverviewSection();
   renderAccountsSection();
@@ -3302,10 +3445,41 @@ function init() {
   renderUKSection();
   renderSettingsSection();
 
-  // Charts (Chart.js loaded from CDN)
-  if (typeof Chart !== "undefined") {
-    updateAllCharts();
-  }
+  if (typeof Chart !== "undefined") updateAllCharts();
+
+  document.getElementById("logoutBtn")?.addEventListener("click", async () => {
+    await WealthOSAuth.signOut();
+    showAuthScreen(true);
+    showLogoutButton(false);
+    document.getElementById("authForm")?.reset();
+    document.getElementById("authError")?.classList.add("hidden");
+  });
 }
 
-init();
+async function bootstrap() {
+  const config = window.WEALTH_OS_CONFIG || {};
+  const supabaseEnabled = config.supabaseUrl && config.supabaseAnonKey;
+
+  if (!supabaseEnabled) {
+    showAuthScreen(false);
+    showLogoutButton(false);
+    bootstrapApp();
+    return;
+  }
+
+  const session = await WealthOSAuth.getSession();
+  if (!session) {
+    showAuthScreen(true);
+    showLogoutButton(false);
+    initAuth();
+    return;
+  }
+
+  showAuthScreen(false);
+  showLogoutButton(true);
+  bootstrapApp();
+}
+
+/* ========== Init ========== */
+// Bootstrap checks Supabase config and auth, then runs the app
+bootstrap();
