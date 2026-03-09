@@ -21,6 +21,7 @@ const KEYS = {
   monthlySnapshots: "wealth-os-monthly-snapshots",
   transfers: "wealth-os-transfers",
   reminders: "wealth-os-reminders",
+  ukAllowances: "wealth-os-uk-allowances",
 };
 
 /* ========== Default Data ========== */
@@ -70,6 +71,7 @@ let netWorthSnapshots = [];
 let monthlySnapshots = []; /* { month, netWorth, cash, investments, realEstate, business, liabilities, income, expenses } */
 let transfers = [];
 let reminders = [];
+let ukAllowances = { lisaYTD: 0, isaYTD: 0, pensionYTD: 0, studentLoanBalance: 0, studentLoanMonthly: 0 };
 
 /* Chart.js instances (destroy before re-create) */
 let chartNetWorth = null;
@@ -148,7 +150,7 @@ function emptyState(title, text, actionLabel, actionId) {
 }
 
 /* ========== Section Navigation ========== */
-const SECTIONS = ["overview", "accounts", "cash-flow", "investments", "real-estate", "liabilities", "business", "tax", "goals", "analytics", "settings"];
+const SECTIONS = ["overview", "accounts", "cash-flow", "investments", "real-estate", "liabilities", "business", "tax", "goals", "analytics", "insights", "uk-planning", "settings"];
 const SECTION_TITLES = {
   overview: "Overview",
   accounts: "Accounts",
@@ -160,6 +162,8 @@ const SECTION_TITLES = {
   tax: "Tax",
   goals: "Goals",
   analytics: "Analytics",
+  insights: "Insights",
+  "uk-planning": "UK Planning",
   settings: "Settings",
 };
 
@@ -204,6 +208,8 @@ function initNavigation() {
       if (sectionId === "real-estate") renderRealEstateSection();
       if (sectionId === "liabilities") renderLiabilitiesSection();
       if (sectionId === "analytics") { renderAnalyticsSection(); updateAnalyticsCharts(); }
+      if (sectionId === "insights") renderInsightsSection();
+      if (sectionId === "uk-planning") renderUKSection();
     });
   });
 }
@@ -434,6 +440,18 @@ function loadAll() {
   if (accounts.length === 0) {
     migrateToAccounts();
   }
+
+  // UK allowances
+  const uk = localStorage.getItem(KEYS.ukAllowances);
+  if (uk) {
+    try {
+      ukAllowances = { ...ukAllowances, ...JSON.parse(uk) };
+    } catch (e) {}
+  }
+}
+
+function saveUkAllowances() {
+  localStorage.setItem(KEYS.ukAllowances, JSON.stringify(ukAllowances));
 }
 
 /**
@@ -1188,6 +1206,287 @@ function getEmergencyFundData() {
   return { monthsCovered, targetMonths, targetAmount, pct, label, needed };
 }
 
+/* ========== Financial Insights ==========
+ * Generate simple insights from current data. Types: Warning, Opportunity, Info.
+ */
+function getFinancialInsights() {
+  const insights = [];
+  const acc = getAccountTotals();
+  const ef = getEmergencyFundData();
+  const sr = getSavingsRateData();
+  const fi = getFIProgress();
+  const essential = Number(settings.essentialExpenses) || 0;
+  const totalA = acc.totalAssets;
+
+  if (essential > 0 && ef.monthsCovered < ef.targetMonths && ef.label === "Low") {
+    insights.push({ type: "Warning", msg: `Emergency fund is below target (${ef.monthsCovered.toFixed(1)} of ${ef.targetMonths} months).` });
+  }
+  if (essential > 0 && ef.label === "Strong") {
+    insights.push({ type: "Info", msg: "Emergency fund coverage is strong." });
+  }
+
+  if (sr.avgRate != null && sr.currentRate != null) {
+    const diff = sr.currentRate - sr.avgRate;
+    if (diff > 10) insights.push({ type: "Opportunity", msg: "Savings rate improved vs your average." });
+    else if (diff < -10) insights.push({ type: "Warning", msg: "Savings rate is lower than your average." });
+  }
+
+  if (totalA > 0 && acc.liabilities > 0) {
+    const ratio = acc.liabilities / totalA;
+    if (ratio > 0.5) insights.push({ type: "Warning", msg: "Liabilities are high relative to assets." });
+  }
+
+  if (totalA > 0) {
+    const cats = [
+      { n: "Cash", v: acc.cash },
+      { n: "Investments", v: acc.investments },
+      { n: "Real Estate", v: acc.realEstate },
+      { n: "Business", v: acc.business },
+    ].filter((c) => c.v > 0);
+    const largest = cats.reduce((a, b) => (b.v > a.v ? b : a), { n: "", v: 0 });
+    const pct = Math.round((largest.v / totalA) * 100);
+    if (pct > 70) insights.push({ type: "Info", msg: `${largest.n} dominates your portfolio (${pct}%). Consider diversifying.` });
+  }
+
+  if (monthlySnapshots.length >= 2) {
+    const sorted = [...monthlySnapshots].sort((a, b) => b.month.localeCompare(a.month));
+    const curr = sorted[0];
+    const prev = sorted[1];
+    const currExp = curr.expenses || 0;
+    const prevExp = prev.expenses || 0;
+    if (prevExp > 0 && currExp > prevExp * 1.15) {
+      insights.push({ type: "Warning", msg: `Monthly expenses increased vs ${prev.month}.` });
+    }
+  }
+
+  let recMonthly = 0;
+  recurring.forEach((r) => { recMonthly += getRecurringMonthlyAmount(r); });
+  const monIn = getOverviewData().monIn;
+  if (monIn > 0 && recMonthly > monIn * 0.4) {
+    insights.push({ type: "Warning", msg: "Upcoming recurring obligations are high relative to income." });
+  }
+
+  const taxTotal = (Number(tax.personalTax) || 0) + (Number(tax.businessTax) || 0);
+  const taxSetAside = Number(tax.setAside) || 0;
+  if (taxTotal > 0 && taxSetAside < taxTotal) {
+    insights.push({ type: "Warning", msg: "Tax reserve may be insufficient." });
+  }
+
+  goals.forEach((g) => {
+    const target = Number(g.target) || 1;
+    const current = Number(g.current) || 0;
+    const pct = target > 0 ? (current / target) * 100 : 0;
+    if (pct >= 100) insights.push({ type: "Opportunity", msg: `"${g.name}" goal completed!` });
+  });
+
+  return insights;
+}
+
+/* ========== Forecasting ==========
+ * Simple projections: emergency fund, goals, FIRE, debt payoff. Estimates only.
+ */
+function getForecasts() {
+  const forecasts = [];
+  const acc = getAccountTotals();
+  const ef = getEmergencyFundData();
+  const fi = getFIProgress();
+  const sr = getSavingsRateData();
+  const essential = Number(settings.essentialExpenses) || 0;
+
+  if (ef.needed > 0 && essential > 0 && sr.currentSavings != null && sr.currentSavings > 0) {
+    const months = Math.ceil(ef.needed / sr.currentSavings);
+    forecasts.push({
+      label: "Emergency fund target",
+      value: months <= 24 ? `~${months} months` : "Over 2 years",
+      status: months <= 12 ? "On track" : "Off track",
+    });
+  } else if (ef.needed > 0) {
+    forecasts.push({ label: "Emergency fund target", value: "Add income/expense data", status: "—" });
+  }
+
+  goals.forEach((g) => {
+    const target = Number(g.target) || 0;
+    const current = Number(g.current) || 0;
+    const remaining = Math.max(0, target - current);
+    const monthly = Number(g.monthly) || 0;
+    if (target > 0 && remaining > 0 && monthly > 0) {
+      const months = Math.ceil(remaining / monthly);
+      forecasts.push({
+        label: g.name,
+        value: `~${months} months`,
+        status: months <= 60 ? "On track" : "Long timeline",
+      });
+    } else if (remaining > 0) {
+      forecasts.push({ label: g.name, value: "Set monthly contribution", status: "—" });
+    }
+  });
+
+  if (fi.fireNumber > 0 && fi.remaining > 0) {
+    const avgSavings = monthlySnapshots.length >= 2
+      ? monthlySnapshots.reduce((s, x) => s + ((x.income || 0) - (x.expenses || 0)), 0) / monthlySnapshots.length
+      : sr.currentSavings;
+    if (avgSavings > 0) {
+      const months = Math.ceil(fi.remaining / avgSavings);
+      const years = Math.round(months / 12);
+      forecasts.push({
+        label: "FIRE target (estimate)",
+        value: years > 0 ? `~${years} years` : "—",
+        status: years <= 20 ? "On track" : "Long journey",
+      });
+    }
+  }
+
+  const studentBal = Number(ukAllowances.studentLoanBalance) || 0;
+  const studentMonthly = Number(ukAllowances.studentLoanMonthly) || 0;
+  if (studentBal > 0 && studentMonthly > 0) {
+    const months = Math.ceil(studentBal / studentMonthly);
+    forecasts.push({
+      label: "Student loan payoff",
+      value: `~${months} months`,
+      status: "Estimate",
+    });
+  }
+
+  return forecasts;
+}
+
+function renderInsightsSection() {
+  const insights = getFinancialInsights();
+  const listEl = document.getElementById("insightsList");
+  const overviewEl = document.getElementById("overviewInsights");
+  const renderList = (el) => {
+    if (!el) return;
+    el.innerHTML = "";
+    if (insights.length === 0) {
+      el.innerHTML = '<p class="empty-message">Add more data to see insights.</p>';
+      return;
+    }
+    insights.forEach((i) => {
+      const div = document.createElement("div");
+      div.className = `insight-item insight-${i.type.toLowerCase()}`;
+      div.innerHTML = `<span class="insight-type">${i.type}</span><span class="insight-msg">${escapeHtml(i.msg)}</span>`;
+      el.appendChild(div);
+    });
+  };
+  renderList(listEl);
+  renderList(overviewEl);
+
+  const forecasts = getForecasts();
+  const foreEl = document.getElementById("forecastingList");
+  if (foreEl) {
+    foreEl.innerHTML = "";
+    if (forecasts.length === 0) {
+      foreEl.innerHTML = '<p class="empty-message">Add goals and data to see projections.</p>';
+    } else {
+      forecasts.forEach((f) => {
+        const div = document.createElement("div");
+        div.className = "forecast-item";
+        div.innerHTML = `
+          <div class="forecast-label">${escapeHtml(f.label)}</div>
+          <div class="forecast-value">${escapeHtml(f.value)}</div>
+          <div class="forecast-status">${escapeHtml(f.status)}</div>
+        `;
+        foreEl.appendChild(div);
+      });
+    }
+  }
+
+  const review = getMonthlyReviewData();
+  const reviewEl = document.getElementById("monthlyReview");
+  if (reviewEl) {
+    reviewEl.innerHTML = `
+      <div class="review-grid">
+        <div class="review-item"><span class="review-label">Income</span><span>${formatCurrency(review.income)}</span></div>
+        <div class="review-item"><span class="review-label">Expenses</span><span>${formatCurrency(review.expenses)}</span></div>
+        <div class="review-item"><span class="review-label">Monthly surplus</span><span class="${review.surplus >= 0 ? "positive" : "negative"}">${formatCurrency(review.surplus)}</span></div>
+        <div class="review-item"><span class="review-label">Savings rate</span><span>${review.savingsRate != null ? review.savingsRate.toFixed(0) + "%" : "—"}</span></div>
+        <div class="review-item"><span class="review-label">Net worth change</span><span class="${review.netWorthChange != null && review.netWorthChange >= 0 ? "positive" : "negative"}">${review.netWorthChange != null ? formatCurrency(review.netWorthChange) : "—"}</span></div>
+        <div class="review-item"><span class="review-label">Biggest expense</span><span>${review.biggestCategory ? review.biggestCategory + " " + formatCurrency(review.biggestAmount) : "—"}</span></div>
+      </div>
+      <div class="review-upcoming">
+        <h4>Upcoming</h4>
+        ${review.upcoming.length ? review.upcoming.map((u) => `<div class="reminder-item"><span>${escapeHtml(u.title)}</span><span>${escapeHtml(u.date)}</span></div>`).join("") : "<p class='empty-message'>No upcoming dates</p>"}
+      </div>
+    `;
+  }
+}
+
+/* ========== Monthly Review ========== */
+function getMonthlyReviewData() {
+  const data = getOverviewData();
+  const analytics = getCashFlowAnalytics();
+  const sr = getSavingsRateData();
+  const mc = getMonthlyNetWorthChange();
+  const biggestCat = Object.entries(analytics.byCategory).sort((a, b) => b[1] - a[1])[0];
+  const upcoming = [...reminders.filter((r) => r.date), ...recurring.filter((r) => r.nextDue).map((r) => ({ title: r.name, date: r.nextDue }))]
+    .sort((a, b) => (a.date || "").localeCompare(b.date || ""))
+    .slice(0, 5);
+  return {
+    income: data.monIn,
+    expenses: data.monOut,
+    surplus: data.monIn - data.monOut,
+    savingsRate: sr.currentRate,
+    netWorthChange: mc.change,
+    biggestCategory: biggestCat ? biggestCat[0] : null,
+    biggestAmount: biggestCat ? biggestCat[1] : 0,
+    upcoming,
+  };
+}
+
+/* ========== UK Planning ========== */
+function getUKTaxYearStr() {
+  const d = new Date();
+  const y = d.getMonth() >= 3 ? d.getFullYear() : d.getFullYear() - 1;
+  return `Apr ${y} – Apr ${y + 1}`;
+}
+
+function renderUKSection() {
+  const LISA_CAP = 4000;
+  const ISA_ALLOWANCE = 20000;
+  const lisa = Number(ukAllowances.lisaYTD) || 0;
+  const isa = Number(ukAllowances.isaYTD) || 0;
+  const pension = Number(ukAllowances.pensionYTD) || 0;
+  const studentBal = Number(ukAllowances.studentLoanBalance) || 0;
+  const studentMo = Number(ukAllowances.studentLoanMonthly) || 0;
+
+  const taxYearEl = document.getElementById("ukTaxYear");
+  if (taxYearEl) taxYearEl.textContent = getUKTaxYearStr();
+  const setVal = (id, v) => { const e = document.getElementById(id); if (e) e.value = v; };
+  setVal("ukLisa", lisa);
+  setVal("ukIsa", isa);
+  setVal("ukPension", pension);
+  setVal("ukStudentBalance", studentBal);
+  setVal("ukStudentMonthly", studentMo);
+
+  const lisaPct = Math.min(100, (lisa / LISA_CAP) * 100);
+  const isaPct = Math.min(100, (isa / ISA_ALLOWANCE) * 100);
+  const lisaBar = document.getElementById("ukLisaBar");
+  const isaBar = document.getElementById("ukIsaBar");
+  if (lisaBar) lisaBar.style.width = lisaPct + "%";
+  if (isaBar) isaBar.style.width = isaPct + "%";
+
+  const lisaRem = document.getElementById("ukLisaRemaining");
+  const isaRem = document.getElementById("ukIsaRemaining");
+  if (lisaRem) lisaRem.textContent = lisa < LISA_CAP ? formatCurrency(LISA_CAP - lisa) + " remaining" : "Limit reached";
+  if (isaRem) isaRem.textContent = isa < ISA_ALLOWANCE ? formatCurrency(ISA_ALLOWANCE - isa) + " remaining" : "Allowance used";
+
+  const studentEst = document.getElementById("ukStudentEstimate");
+  if (studentEst) studentEst.textContent = (studentBal > 0 && studentMo > 0) ? `~${Math.ceil(studentBal / studentMo)} months to pay off` : "";
+}
+
+function initUKSection() {
+  document.getElementById("ukSave")?.addEventListener("click", () => {
+    ukAllowances.lisaYTD = Number(document.getElementById("ukLisa")?.value) || 0;
+    ukAllowances.isaYTD = Number(document.getElementById("ukIsa")?.value) || 0;
+    ukAllowances.pensionYTD = Number(document.getElementById("ukPension")?.value) || 0;
+    ukAllowances.studentLoanBalance = Number(document.getElementById("ukStudentBalance")?.value) || 0;
+    ukAllowances.studentLoanMonthly = Number(document.getElementById("ukStudentMonthly")?.value) || 0;
+    saveUkAllowances();
+    renderUKSection();
+    alert("UK data saved.");
+  });
+}
+
 /* ========== Chart.js - Dark Theme Config ========== */
 const CHART_COLORS = {
   text: "#94a3b8",
@@ -1437,6 +1736,19 @@ function renderOverviewSection() {
   }
 
   renderRemindersSection();
+
+  const insights = getFinancialInsights();
+  const overviewInsightsEl = document.getElementById("overviewInsights");
+  if (overviewInsightsEl) {
+    overviewInsightsEl.innerHTML = "";
+    insights.slice(0, 4).forEach((i) => {
+      const div = document.createElement("div");
+      div.className = `insight-item insight-${i.type.toLowerCase()}`;
+      div.innerHTML = `<span class="insight-type">${i.type}</span><span class="insight-msg">${escapeHtml(i.msg)}</span>`;
+      overviewInsightsEl.appendChild(div);
+    });
+    if (insights.length === 0) overviewInsightsEl.innerHTML = '<p class="empty-message">Add data to see insights.</p>';
+  }
 
   const acc = getAccountTotals();
   const totalA = acc.totalAssets;
@@ -2253,14 +2565,15 @@ function getNextGoalId() {
   return max + 1;
 }
 
-function addGoal(name, target, current) {
+function addGoal(name, target, current, monthly) {
   const t = Number(target) || 0;
   const c = Number(current) || 0;
+  const m = Number(monthly) || 0;
   if (!name.trim()) {
     alert("Please enter a goal name.");
     return;
   }
-  goals.push({ id: getNextGoalId(), name: name.trim(), target: t, current: c });
+  goals.push({ id: getNextGoalId(), name: name.trim(), target: t, current: c, monthly: m });
   saveGoals();
   renderGoalsSection();
   renderOverviewSection();
@@ -2269,7 +2582,7 @@ function addGoal(name, target, current) {
 function removeGoal(id) {
   const g = goals.find((x) => x.id === id);
   if (g && !confirm(`Remove goal "${g.name}"?`)) return;
-  saveGoals();
+  goals = goals.filter((x) => x.id !== id);
   renderGoalsSection();
   renderOverviewSection();
 }
@@ -2304,27 +2617,55 @@ function renderGoalsSection() {
   }
 
   goals.forEach((g) => {
-    const div = document.createElement("div");
-    div.className = "goal-card";
     const target = Number(g.target) || 1;
     const current = Number(g.current) || 0;
+    const monthly = Number(g.monthly) || 0;
     const pct = target > 0 ? Math.min(100, Math.round((current / target) * 100)) : 0;
 
+    let status = "Needs Attention";
+    if (pct >= 100) status = "Completed";
+    else if (monthly > 0) {
+      const remaining = Math.max(0, target - current);
+      const monthsLeft = Math.ceil(remaining / monthly);
+      if (monthsLeft <= 60) status = "On Track";
+    }
+
+    let estComplete = "";
+    if (pct < 100 && monthly > 0) {
+      const remaining = Math.max(0, target - current);
+      const months = Math.ceil(remaining / monthly);
+      estComplete = months <= 120 ? `~${months} months` : `~${Math.round(months / 12)} years`;
+    }
+
+    const div = document.createElement("div");
+    div.className = "goal-card";
     div.innerHTML = `
       <div class="goal-header">
         <span class="goal-name">${escapeHtml(g.name)}</span>
+        <span class="goal-status goal-status-${status.toLowerCase().replace(/ /g, "-")}">${escapeHtml(status)}</span>
         <button type="button" class="delete-btn">Remove</button>
       </div>
       <label class="goal-current-label">Current: £<input type="number" data-id="${g.id}" step="0.01" value="${current}" /></label>
+      <label class="goal-monthly-label">Monthly: £<input type="number" data-id-monthly="${g.id}" step="0.01" value="${monthly}" placeholder="0" /></label>
       <div class="goal-bar"><div class="goal-bar-fill" style="width:${pct}%"></div></div>
       <div class="goal-meta">${formatCurrency(current)} / ${formatCurrency(target)} (${pct}%)</div>
+      ${estComplete ? `<div class="goal-estimate">Est. ${estComplete}</div>` : ""}
     `;
 
     div.querySelector(".delete-btn").addEventListener("click", () => removeGoal(g.id));
-    div.querySelector("input").addEventListener("change", (e) => {
+    div.querySelector("[data-id]")?.addEventListener("change", (e) => {
       const goal = goals.find((x) => x.id === g.id);
       if (goal) {
         goal.current = Number(e.target.value) || 0;
+        saveGoals();
+        renderGoalsSection();
+        renderOverviewSection();
+      }
+    });
+    div.querySelector("[data-id-monthly]")?.addEventListener("change", (e) => {
+      const goal = goals.find((x) => x.id === g.id);
+      if (goal) {
+        goal.monthly = Number(e.target.value) || 0;
         saveGoals();
         renderGoalsSection();
         renderOverviewSection();
@@ -2356,10 +2697,13 @@ function initGoalsModal() {
     const name = document.getElementById("goalName").value;
     const target = document.getElementById("goalTarget").value;
     const current = document.getElementById("goalCurrent").value;
-    addGoal(name, target, current);
+    const monthly = document.getElementById("goalMonthly")?.value || 0;
+    addGoal(name, target, current, monthly);
     overlay.classList.add("hidden");
     form.reset();
     document.getElementById("goalCurrent").value = "0";
+    const gm = document.getElementById("goalMonthly");
+    if (gm) gm.value = "";
   });
 }
 
@@ -2526,6 +2870,7 @@ function init() {
   initBusinessSection();
   initTaxSection();
   initGoalsModal();
+  initUKSection();
   initSettingsSection();
 
   // Initial render of all sections
@@ -2541,6 +2886,8 @@ function init() {
   renderBusinessSection();
   renderTaxSection();
   renderGoalsSection();
+  renderInsightsSection();
+  renderUKSection();
   renderSettingsSection();
 
   // Charts (Chart.js loaded from CDN)

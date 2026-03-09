@@ -34,6 +34,8 @@
         <button class="nav-item" data-section="tax">📋 Tax</button>
         <button class="nav-item" data-section="goals">🎯 Goals</button>
         <button class="nav-item" data-section="analytics">📋 Analytics</button>
+        <button class="nav-item" data-section="insights">💡 Insights</button>
+        <button class="nav-item" data-section="uk-planning">🇬🇧 UK Planning</button>
         <button class="nav-item" data-section="settings">⚙️ Settings</button>
       </nav>
     </aside>
@@ -95,6 +97,10 @@
               <div class="chart-container chart-doughnut"><canvas id="chartAssetsLiab"></canvas></div>
               <div id="assetsLiabInsight" class="allocation-insight"></div>
             </div>
+          </div>
+          <div class="panel insights-preview">
+            <h3>Financial Insights</h3>
+            <div id="overviewInsights" class="insights-list"></div>
           </div>
           <div class="overview-grid">
             <div class="overview-main">
@@ -351,7 +357,61 @@
           </div>
         </section>
 
-        <!-- Section 11: Settings -->
+        <!-- Section 11: Insights -->
+        <section id="insights" class="section">
+          <div class="panel">
+            <h3>Financial Insights</h3>
+            <p class="panel-desc">AI-generated insights from your data.</p>
+            <div id="insightsList" class="insights-list"></div>
+          </div>
+          <div class="panel">
+            <h3>Forecasting</h3>
+            <p class="panel-desc">Estimates based on current data. Results are illustrative.</p>
+            <div id="forecastingList" class="forecasting-list"></div>
+          </div>
+          <div class="panel monthly-review-panel">
+            <h3>Monthly Review</h3>
+            <div id="monthlyReview" class="monthly-review"></div>
+          </div>
+        </section>
+
+        <!-- Section 12: UK Planning -->
+        <section id="uk-planning" class="section">
+          <div class="panel">
+            <h3>UK Tax Year & Allowances</h3>
+            <p class="panel-desc">Current tax year: <span id="ukTaxYear">Apr 2025 – Apr 2026</span></p>
+            <div class="uk-allowances-grid">
+              <div class="uk-card">
+                <h4>LISA</h4>
+                <p class="uk-limit">£4,000 annual limit</p>
+                <label>YTD contributed <input type="number" id="ukLisa" step="0.01" placeholder="0" /></label>
+                <div class="uk-progress"><div id="ukLisaBar" class="uk-progress-fill" style="width:0%"></div></div>
+                <p id="ukLisaRemaining" class="uk-remaining"></p>
+              </div>
+              <div class="uk-card">
+                <h4>ISA</h4>
+                <p class="uk-limit">£20,000 annual allowance</p>
+                <label>YTD contributed <input type="number" id="ukIsa" step="0.01" placeholder="0" /></label>
+                <div class="uk-progress"><div id="ukIsaBar" class="uk-progress-fill" style="width:0%"></div></div>
+                <p id="ukIsaRemaining" class="uk-remaining"></p>
+              </div>
+              <div class="uk-card">
+                <h4>Pension</h4>
+                <p class="uk-limit">Contributions this tax year</p>
+                <label>YTD contributed <input type="number" id="ukPension" step="0.01" placeholder="0" /></label>
+              </div>
+              <div class="uk-card">
+                <h4>Student Loan</h4>
+                <label>Balance <input type="number" id="ukStudentBalance" step="0.01" placeholder="0" /></label>
+                <label>Monthly repayment <input type="number" id="ukStudentMonthly" step="0.01" placeholder="0" /></label>
+                <p id="ukStudentEstimate" class="uk-remaining"></p>
+              </div>
+            </div>
+            <button type="button" id="ukSave">Save UK Data</button>
+          </div>
+        </section>
+
+        <!-- Section 13: Settings -->
         <section id="settings" class="section">
           <div class="panel">
             <h3>Settings</h3>
@@ -540,6 +600,7 @@
         <label>Goal Name <input type="text" id="goalName" required /></label>
         <label>Target Amount (£) <input type="number" id="goalTarget" step="0.01" required /></label>
         <label>Current Amount (£) <input type="number" id="goalCurrent" step="0.01" value="0" /></label>
+        <label>Monthly contribution (£) <input type="number" id="goalMonthly" step="0.01" placeholder="Est. monthly" /></label>
         <div class="modal-actions">
           <button type="button" id="goalCancel">Cancel</button>
           <button type="submit">Add Goal</button>
